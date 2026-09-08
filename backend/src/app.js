@@ -33,37 +33,28 @@ const allowedOrigins = (process.env.CORS_ORIGINS || "http://localhost:3000,http:
   .map((o) => o.trim())
   .filter(Boolean);
 
-// If CORS_ORIGINS is set to * allow all origins
 const corsAllowAll = allowedOrigins.includes("*");
 
 app.use(
   cors({
-    origin: (origin, callback) => {
-      // Preflight and server-to-server requests (no origin header)
-      if (!origin) return callback(null, true);
-      // Wildcard: allow all
-      if (corsAllowAll) return callback(null, true);
-      // Allow localhost in any environment
-      if (origin.includes("localhost") || origin.includes("127.0.0.1")) return callback(null, true);
-      // Allow any onrender.com subdomain
-      if (origin.endsWith(".onrender.com")) return callback(null, true);
-      // Allow vercel, netlify, github pages
-      if (origin.endsWith(".vercel.app") || origin.endsWith(".netlify.app") || origin.endsWith(".github.io")) return callback(null, true);
-      // Allow explicit origins from env
-      if (allowedOrigins.includes(origin)) return callback(null, true);
-      // Allow everything else in development
-      if (process.env.NODE_ENV !== "production") return callback(null, true);
-      return callback(null, true); // be permissive — block at auth layer instead
-    },
-    credentials: true,
+    origin: corsAllowAll
+      ? "*"
+      : (origin, callback) => {
+          if (!origin) return callback(null, true);
+          if (origin.includes("localhost") || origin.includes("127.0.0.1")) return callback(null, true);
+          if (origin.endsWith(".onrender.com")) return callback(null, true);
+          if (origin.endsWith(".vercel.app") || origin.endsWith(".netlify.app")) return callback(null, true);
+          if (allowedOrigins.includes(origin)) return callback(null, true);
+          return callback(null, true);
+        },
+    credentials: false,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "Cookie", "x-gemini-key"],
-    exposedHeaders: ["Set-Cookie"],
+    allowedHeaders: ["Content-Type", "Authorization", "x-gemini-key"],
   })
 );
 
-// Handle preflight for all routes
-app.options("*", cors());
+// Handle preflight OPTIONS for all routes
+app.options("*", cors({ origin: "*", credentials: false }));
 
 app.use(express.json({ limit: "16kb" }));
 app.use(express.urlencoded({ extended: true, limit: "16kb" }));
