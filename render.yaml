@@ -11,7 +11,7 @@ services:
       - key: NODE_ENV
         value: production
       - key: PORT
-        value: 8000
+        value: 10000
       - key: MONGODB_URL
         sync: false
       - key: JWT_SECRET
@@ -29,7 +29,7 @@ services:
       - key: ADMIN_PASSWORD
         sync: false
       - key: CORS_ORIGINS
-        sync: false
+        value: "*"
       - key: GEMINI_API_KEY
         sync: false
 
@@ -40,6 +40,10 @@ services:
     rootDir: frontend
     buildCommand: npm install && npm run build
     staticPublishPath: ./dist
+    headers:
+      - path: /*
+        name: Access-Control-Allow-Origin
+        value: "*"
     routes:
       - type: rewrite
         source: /*
@@ -55,6 +59,10 @@ services:
     rootDir: admin
     buildCommand: npm install && npm run build
     staticPublishPath: ./dist
+    headers:
+      - path: /*
+        name: Access-Control-Allow-Origin
+        value: "*"
     routes:
       - type: rewrite
         source: /*
