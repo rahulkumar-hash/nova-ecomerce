@@ -1,0 +1,170 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:is(.dark, .dark *));
+
+@theme {
+  --color-primary: var(--color-primary, #6366f1);
+  --color-primary-hover: var(--color-primary-hover, #4f46e5);
+  --color-primary-light: var(--color-primary-light, #e0e7ff);
+  --color-secondary: var(--color-secondary, #06b6d4);
+  --color-accent: var(--color-accent, #f59e0b);
+}
+
+@layer base {
+  :root {
+    --color-primary: #6366f1;
+    --color-primary-hover: #4f46e5;
+    --color-primary-light: #e0e7ff;
+    --color-secondary: #06b6d4;
+    --color-accent: #f59e0b;
+  }
+
+  html {
+    background-color: #fafafa;
+    scroll-behavior: smooth;
+  }
+
+  html.dark {
+    background-color: #090d16;
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: inherit;
+    overflow-x: clip;
+    width: 100%;
+  }
+
+  #root {
+    min-height: 100vh;
+    width: 100%;
+  }
+
+  /* Universal Scrollbar Removal */
+  * {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+
+  *::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+    width: 0px;
+    height: 0px;
+    background: transparent;
+  }
+}
+
+/* Performance: Skip layout/paint of offscreen sections until scrolled */
+.content-auto {
+  content-visibility: auto;
+  contain-intrinsic-size: auto none auto 500px;
+}
+.content-auto-banner {
+  content-visibility: auto;
+  contain-intrinsic-size: auto none auto 228px;
+}
+.content-auto-catalog {
+  content-visibility: auto;
+  contain-intrinsic-size: auto none auto 650px;
+}
+.content-auto-promo {
+  content-visibility: auto;
+  contain-intrinsic-size: auto none auto 380px;
+}
+.content-auto-trust {
+  content-visibility: auto;
+  contain-intrinsic-size: auto none auto 320px;
+}
+.content-auto-footer {
+  content-visibility: auto;
+  contain-intrinsic-size: auto none auto 400px;
+}
+
+.theme-btn-primary {
+  background-color: var(--color-primary);
+  color: #ffffff;
+  transition: all 0.2s ease;
+}
+.theme-btn-primary:hover {
+  background-color: var(--color-primary-hover);
+  filter: brightness(1.05);
+}
+
+.theme-text-primary {
+  color: var(--color-primary);
+}
+
+.theme-border-primary {
+  border-color: var(--color-primary);
+}
+
+.theme-bg-primary-light {
+  background-color: var(--color-primary-light);
+}
+
+.theme-ring-primary {
+  --tw-ring-color: var(--color-primary);
+}
+
+/* Razorpay Modal Overlay - Transparent Backdrop so Background Remains Visible */
+iframe,
+.razorpay-container,
+.razorpay-container > iframe,
+iframe.razorpay-checkout-frame,
+iframe[src*="razorpay"] {
+  color-scheme: light !important;
+  background-color: transparent !important;
+  background: transparent !important;
+}
+
+.razorpay-container {
+  background-color: rgba(15, 23, 42, 0.75) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  transition: all 0.3s ease;
+}
+
+.razorpay-backdrop {
+  background-color: transparent !important;
+  background: transparent !important;
+}
+
+/* Print Styles for Tax Invoice */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 8mm;
+  }
+  body {
+    background: #ffffff !important;
+    color: #0f172a !important;
+  }
+  body * {
+    visibility: hidden;
+  }
+  #printable-tax-invoice,
+  #printable-tax-invoice * {
+    visibility: visible;
+  }
+  #printable-tax-invoice {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 12px !important;
+    box-shadow: none !important;
+    border: none !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+}
+

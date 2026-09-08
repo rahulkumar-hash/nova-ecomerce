@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="alternate icon" href="https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=64" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <!-- Primary SEO Meta Tags -->
+    <title>NovaStore | Premium Multi-Category Shopping</title>
+    <meta name="title" content="NovaStore | Premium Multi-Category Shopping" />
+    <meta name="description" content="Discover premium electronics, modern fashion, footwear, and lifestyle essentials with lightning-fast delivery, 100% genuine products, and verified payment security." />
+    <meta name="keywords" content="ecommerce, online shopping, fashion, electronics, gadgets, footwear, genuine brands, buy online India, NovaStore" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <link rel="canonical" href="https://novastore.com/" />
+
+    <!-- Mobile & Browser Accent Colors -->
+    <meta name="theme-color" content="#4f46e5" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="NovaStore" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://novastore.com/" />
+    <meta property="og:title" content="NovaStore | Premium Multi-Category Shopping" />
+    <meta property="og:description" content="Discover premium electronics, modern fashion, footwear, and lifestyle essentials with lightning-fast delivery and verified security." />
+    <meta property="og:image" content="https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=1200&h=630&fit=crop" />
+    <meta property="og:site_name" content="NovaStore" />
+    <meta property="og:locale" content="en_IN" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="https://novastore.com/" />
+    <meta name="twitter:title" content="NovaStore | Premium Multi-Category Shopping" />
+    <meta name="twitter:description" content="Discover premium electronics, modern fashion, footwear, and lifestyle essentials with lightning-fast delivery." />
+    <meta name="twitter:image" content="https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=1200&h=630&fit=crop" />
+
+    <!-- Performance: DNS Prefetch & Preconnect -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://images.unsplash.com" />
+    <link rel="dns-prefetch" href="https://images.unsplash.com" />
+
+    <!-- LCP Hero Image Preload (Responsive: Mobile 640px vs Desktop 1280px) -->
+    <link rel="preload" as="image" href="/images/hero-tech-mobile.webp" type="image/webp" media="(max-width: 640px)" fetchpriority="high" />
+    <link rel="preload" as="image" href="/images/hero-tech-desktop.webp" type="image/webp" media="(min-width: 641px)" fetchpriority="high" />
+
+    <!-- Preload Primary WebFont to eliminate font swap layout shift (CLS: 0) -->
+    <link rel="preload" href="https://fonts.gstatic.com/s/plusjakartasans/v12/LDIoaomQNQcsA88c7O9yZ4KMCoOg4Ko20yygg_vb.woff2" as="font" type="font/woff2" crossorigin="anonymous" />
+    <link rel="preload" href="https://fonts.gstatic.com/s/plusjakartasans/v12/LDIoaomQNQcsA88c7O9yZ4KMCoOg4Ko40yygg_vbd-E.woff2" as="font" type="font/woff2" crossorigin="anonymous" />
+
+    <!-- Web App Manifest (Deferred after critical head tags) -->
+    <link rel="manifest" href="/site.webmanifest" />
+
+    <!-- Non-Render-Blocking Web Fonts -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Outfit:wght@600;700;800&display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Outfit:wght@600;700;800&display=swap" media="print" onload="this.media='all'" />
+    <noscript>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Outfit:wght@600;700;800&display=swap" />
+    </noscript>
+
+    <!-- Schema.org JSON-LD Structured Data for Google Rich Snippets -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": "https://novastore.com/#organization",
+          "name": "NovaStore",
+          "url": "https://novastore.com/",
+          "logo": {
+            "@type": "ImageObject",
+            "url": "https://novastore.com/favicon.svg"
+          },
+          "contactPoint": {
+            "@type": "ContactPoint",
+            "telephone": "+91-98765-43210",
+            "contactType": "customer service",
+            "areaServed": "IN",
+            "availableLanguage": ["English", "Hindi"]
+          }
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://novastore.com/#website",
+          "url": "https://novastore.com/",
+          "name": "NovaStore",
+          "description": "Premium Single-Vendor E-Commerce Platform",
+          "publisher": {
+            "@id": "https://novastore.com/#organization"
+          },
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": {
+              "@type": "EntryPoint",
+              "urlTemplate": "https://novastore.com/shop?search={search_term_string}"
+            },
+            "query-input": "required name=search_term_string"
+          }
+        }
+      ]
+    }
+    </script>
+    
+    <!-- Instant Anti-FOUC Theme Restoration Script -->
+    <script>
+      (function() {
+        try {
+          var savedMode = localStorage.getItem("themeMode");
+          var prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+          var isDark = savedMode !== null ? savedMode === "dark" : prefersDark;
+          if (isDark) {
+            document.documentElement.classList.add("dark");
+          } else {
+            document.documentElement.classList.remove("dark");
+          }
+
+          var savedTheme = localStorage.getItem("storeTheme");
+          if (savedTheme) {
+            var theme = JSON.parse(savedTheme);
+            var root = document.documentElement;
+            if (theme.primaryColor) root.style.setProperty("--color-primary", theme.primaryColor);
+            if (theme.primaryHover) root.style.setProperty("--color-primary-hover", theme.primaryHover);
+            if (theme.primaryLight) root.style.setProperty("--color-primary-light", theme.primaryLight);
+            if (theme.secondaryColor) root.style.setProperty("--color-secondary", theme.secondaryColor);
+            if (theme.accentColor) root.style.setProperty("--color-accent", theme.accentColor);
+          }
+        } catch (e) {}
+      })();
+    </script>
+    <style>
+      html { background-color: #fafafa; }
+      html.dark { background-color: #090d16; }
+      body { background-color: inherit; }
+
+      /* Prevent browser dark-mode safety mechanism from painting opaque white background on Razorpay iframe */
+      iframe,
+      .razorpay-container,
+      .razorpay-container > iframe,
+      iframe.razorpay-checkout-frame,
+      iframe[src*="razorpay"] {
+        color-scheme: light !important;
+        background: transparent !important;
+        background-color: transparent !important;
+      }
+      .razorpay-container {
+        background-color: rgba(15, 23, 42, 0.75) !important;
+        backdrop-filter: blur(8px) !important;
+        -webkit-backdrop-filter: blur(8px) !important;
+      }
+    </style>
+  </head>
+  <body class="bg-[#fafafa] dark:bg-[#090d16] text-slate-900 dark:text-slate-100 antialiased selection:bg-indigo-500 selection:text-white">
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

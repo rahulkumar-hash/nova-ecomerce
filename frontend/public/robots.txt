@@ -1,0 +1,11 @@
+# Robots.txt for NovaStore E-Commerce
+User-agent: *
+Allow: /
+Disallow: /checkout
+Disallow: /profile
+Disallow: /order-success
+Disallow: /admin
+Disallow: /api/
+
+# Sitemap Location
+Sitemap: https://novastore.com/sitemap.xml
