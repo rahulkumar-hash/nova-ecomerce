@@ -56,15 +56,14 @@ class MainActivity : AppCompatActivity() {
 
         webView = binding.webView
 
-        // True Edge-to-Edge: Status bar is completely transparent, webview header flows behind it
-        WindowCompat.setDecorFitsSystemWindows(window, false)
-        window.statusBarColor = Color.TRANSPARENT
-        window.navigationBarColor = Color.WHITE
+        // System bars configuration: fitsSystemWindows ensures bottom nav is always fully visible
+        WindowCompat.setDecorFitsSystemWindows(window, true)
 
-        // Default light status bar (dark icons for battery/clock)
-        val insetsController = WindowInsetsControllerCompat(window, window.decorView)
-        insetsController.isAppearanceLightStatusBars = true
-        insetsController.isAppearanceLightNavigationBars = true
+        updateSystemBars(
+            isDark = false,
+            statusBarColor = Color.WHITE,
+            navBarColor = Color.WHITE
+        )
 
         setupBottomNav()
         setupSwipeRefresh()
@@ -396,8 +395,7 @@ class MainActivity : AppCompatActivity() {
             window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION)
             window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
 
-            // Keep status bar transparent so website header shows through seamlessly
-            window.statusBarColor = Color.TRANSPARENT
+            window.statusBarColor = statusBarColor
             window.navigationBarColor = navBarColor
 
             // 1. AndroidX WindowInsetsControllerCompat
@@ -422,7 +420,8 @@ class MainActivity : AppCompatActivity() {
             }
             window.decorView.systemUiVisibility = flags
 
-            // 3. Update bottom nav background and divider
+            // 3. Update view backgrounds and bottom nav colors
+            binding.rootLayout.setBackgroundColor(statusBarColor)
             binding.bottomNavContainer.setBackgroundColor(navBarColor)
             binding.bottomNav.setBackgroundColor(navBarColor)
             val navDividerColor = if (isDark) Color.parseColor("#1E293B") else Color.parseColor("#E2E8F0")
