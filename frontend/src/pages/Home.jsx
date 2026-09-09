@@ -203,9 +203,12 @@ export default function Home() {
             >
               <div className="w-16 h-16 sm:w-24 sm:h-24 rounded-xl sm:rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-800 group-hover:scale-110 transition-transform">
                 <img
-                  src={cat.image || "https://images.unsplash.com/photo-1498049794561-7780e7231661?w=200"}
+                  src={cat.image ? (cat.image.includes("images.unsplash.com") ? cat.image.replace(/w=\d+/, 'w=200') : cat.image) : "https://images.unsplash.com/photo-1498049794561-7780e7231661?w=200&auto=format&fit=crop&q=75"}
                   alt={cat.name}
                   loading="lazy"
+                  decoding="async"
+                  width="96"
+                  height="96"
                   className="w-full h-full object-cover"
                 />
               </div>

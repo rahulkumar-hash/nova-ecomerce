@@ -37,21 +37,50 @@ export default function HeroSlider({ banners = [] }) {
             key={slide._id || idx}
             className={"absolute inset-0 transition-opacity duration-700 ease-in-out " + (idx === current ? "opacity-100 z-10" : "opacity-0 z-0 pointer-events-none")}
           >
-            {/* Background Image with Overlay */}
-            <img
-              src={idx === 0 ? "/images/hero-tech-mobile.webp" : getOptimizedBanner(slide.image, 800)}
-              srcSet={idx === 0 
-                ? "/images/hero-tech-mobile.webp 640w, /images/hero-tech-desktop.webp 1280w"
-                : `${getOptimizedBanner(slide.image, 640)} 640w, ${getOptimizedBanner(slide.image, 1024)} 1024w, ${getOptimizedBanner(slide.image, 1600)} 1600w`}
-              sizes="(max-width: 640px) 100vw, 1280px"
-              alt={slide.title || "Featured Collection Banner"}
-              className="w-full h-full object-cover object-center"
-              width="1280"
-              height="480"
-              decoding="async"
-              fetchpriority={idx === 0 ? "high" : "low"}
-              loading={idx === 0 ? "eager" : "lazy"}
-            />
+            {/* Background Image with Overlay (Responsive <picture> for mobile vs desktop) */}
+            {idx === 0 ? (
+              <picture className="w-full h-full block">
+                <source
+                  media="(max-width: 640px)"
+                  srcSet="/images/hero-tech-mobile.webp"
+                />
+                <source
+                  media="(min-width: 641px)"
+                  srcSet="/images/hero-tech-desktop.webp"
+                />
+                <img
+                  src="/images/hero-tech-desktop.webp"
+                  alt={slide.title || "Featured Collection Banner"}
+                  className="w-full h-full object-cover object-center"
+                  width="1280"
+                  height="480"
+                  decoding="async"
+                  fetchpriority="high"
+                  loading="eager"
+                />
+              </picture>
+            ) : (
+              <picture className="w-full h-full block">
+                <source
+                  media="(max-width: 640px)"
+                  srcSet={getOptimizedBanner(slide.image, 480)}
+                />
+                <source
+                  media="(min-width: 641px)"
+                  srcSet={getOptimizedBanner(slide.image, 1280)}
+                />
+                <img
+                  src={getOptimizedBanner(slide.image, 1280)}
+                  alt={slide.title || "Featured Collection Banner"}
+                  className="w-full h-full object-cover object-center"
+                  width="1280"
+                  height="480"
+                  decoding="async"
+                  fetchpriority="low"
+                  loading="lazy"
+                />
+              </picture>
+            )}
             <div className="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-slate-950/60 to-transparent" />
 
             {/* Slide Content */}

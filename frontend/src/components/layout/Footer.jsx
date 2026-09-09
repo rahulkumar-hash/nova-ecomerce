@@ -71,31 +71,31 @@ export default function Footer() {
 
           <div>
             <h3 className="text-xs font-bold text-white uppercase tracking-wider mb-3">Shop Categories</h3>
-            <ul className="space-y-2 text-xs text-slate-400">
-              <li><Link to="/shop?category=electronics" className="hover:text-white">Electronics & Gadgets</Link></li>
-              <li><Link to="/shop?category=fashion" className="hover:text-white">Clothing & Apparel</Link></li>
-              <li><Link to="/shop?category=footwear" className="hover:text-white">Footwear & Shoes</Link></li>
-              <li><Link to="/shop?category=accessories" className="hover:text-white">Accessories & Watches</Link></li>
+            <ul className="space-y-2 text-xs text-slate-300">
+              <li><Link to="/shop?category=electronics-and-gadgets" className="hover:text-white transition-colors">Electronics & Gadgets</Link></li>
+              <li><Link to="/shop?category=clothing-and-apparel" className="hover:text-white transition-colors">Clothing & Apparel</Link></li>
+              <li><Link to="/shop?category=footwear-and-shoes" className="hover:text-white transition-colors">Footwear & Shoes</Link></li>
+              <li><Link to="/shop?category=accessories-and-lifestyle" className="hover:text-white transition-colors">Accessories & Lifestyle</Link></li>
             </ul>
           </div>
 
           <div>
             <h3 className="text-xs font-bold text-white uppercase tracking-wider mb-3">Help & Support</h3>
-            <ul className="space-y-2 text-xs text-slate-400">
-              <li><Link to="/contact-us" className="hover:text-white">Contact Support Desk</Link></li>
-              <li><Link to="/faq" className="hover:text-white">Frequently Asked Questions</Link></li>
-              <li><Link to="/profile" className="hover:text-white">Track Order & Account</Link></li>
-              <li><Link to="/shipping-policy" className="hover:text-white">Shipping & Delivery Rates</Link></li>
+            <ul className="space-y-2 text-xs text-slate-300">
+              <li><Link to="/contact-us" className="hover:text-white transition-colors">Contact Support Desk</Link></li>
+              <li><Link to="/faq" className="hover:text-white transition-colors">Frequently Asked Questions</Link></li>
+              <li><Link to="/profile" className="hover:text-white transition-colors">Track Order & Account</Link></li>
+              <li><Link to="/shipping-policy" className="hover:text-white transition-colors">Shipping & Delivery Rates</Link></li>
             </ul>
           </div>
 
           <div>
             <h3 className="text-xs font-bold text-white uppercase tracking-wider mb-3">Policies & Legal</h3>
-            <ul className="space-y-2 text-xs text-slate-400">
-              <li><Link to="/privacy-policy" className="hover:text-white">Privacy Policy</Link></li>
-              <li><Link to="/terms-and-conditions" className="hover:text-white">Terms & Conditions</Link></li>
-              <li><Link to="/refund-policy" className="hover:text-white">Refund & Return Policy</Link></li>
-              <li><Link to="/about-us" className="hover:text-white">About Our Company</Link></li>
+            <ul className="space-y-2 text-xs text-slate-300">
+              <li><Link to="/privacy-policy" className="hover:text-white transition-colors">Privacy Policy</Link></li>
+              <li><Link to="/terms-and-conditions" className="hover:text-white transition-colors">Terms & Conditions</Link></li>
+              <li><Link to="/refund-policy" className="hover:text-white transition-colors">Refund & Return Policy</Link></li>
+              <li><Link to="/about-us" className="hover:text-white transition-colors">About Our Company</Link></li>
             </ul>
           </div>
         </div>

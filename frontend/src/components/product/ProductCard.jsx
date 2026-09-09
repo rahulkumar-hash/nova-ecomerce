@@ -5,6 +5,29 @@ import { useCart } from "../../context/CartContext";
 import { useWishlist } from "../../context/WishlistContext";
 import { useTheme } from "../../context/ThemeContext";
 
+const getOptimizedThumbnail = (url, width = 400) => {
+  if (!url) return "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&auto=format&fit=crop&q=75";
+  if (typeof url === "string" && url.includes("images.unsplash.com")) {
+    let optimized = url.replace(/w=\d+/, `w=${width}`);
+    if (!optimized.includes("w=")) {
+      optimized += `${optimized.includes("?") ? "&" : "?"}w=${width}`;
+    }
+    if (!optimized.includes("auto=format")) {
+      optimized += "&auto=format";
+    }
+    if (!optimized.includes("fit=crop")) {
+      optimized += "&fit=crop";
+    }
+    if (optimized.includes("q=")) {
+      optimized = optimized.replace(/q=\d+/, "q=75");
+    } else {
+      optimized += "&q=75";
+    }
+    return optimized;
+  }
+  return url;
+};
+
 export default function ProductCard({ product }) {
   const navigate = useNavigate();
   const { addToCart, cartItems, updateQuantity, removeFromCart } = useCart();
@@ -35,7 +58,7 @@ export default function ProductCard({ product }) {
       <div className="relative aspect-square overflow-hidden bg-slate-100 dark:bg-slate-800">
         <Link to={"/product/" + product.slug} className="block w-full h-full">
           <img
-            src={product.thumbnail || (Array.isArray(product.images) && product.images[0]) || "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600"}
+            src={getOptimizedThumbnail(product.thumbnail || (Array.isArray(product.images) && product.images[0]))}
             alt={product.name || "Product"}
             loading="lazy"
             decoding="async"
@@ -43,7 +66,7 @@ export default function ProductCard({ product }) {
             height="400"
             onError={(e) => {
               e.currentTarget.onerror = null;
-              e.currentTarget.src = "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600";
+              e.currentTarget.src = "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&auto=format&fit=crop&q=75";
             }}
             className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500 ease-out"
           />

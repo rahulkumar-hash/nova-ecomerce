@@ -76,7 +76,7 @@ export default function MobileInstallBanner() {
           <button
             type="button"
             onClick={handleDownloadApk}
-            className="px-3 py-2 rounded-xl bg-primary hover:bg-primary-hover text-white text-xs font-bold shadow-md shadow-primary/25 transition-all flex items-center gap-1.5 active:scale-95"
+            className="px-3 py-2 rounded-xl bg-white text-slate-950 hover:bg-slate-100 text-xs font-bold shadow-md transition-all flex items-center gap-1.5 active:scale-95"
           >
             <Download size={13} />
             <span>Install</span>
@@ -84,7 +84,7 @@ export default function MobileInstallBanner() {
           <button
             type="button"
             onClick={handleDismiss}
-            className="p-1.5 text-slate-400 hover:text-white rounded-lg transition-colors"
+            className="p-1.5 text-slate-300 hover:text-white rounded-lg transition-colors"
             aria-label="Close"
           >
             <X size={15} />

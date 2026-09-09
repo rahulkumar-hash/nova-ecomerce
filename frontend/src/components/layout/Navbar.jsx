@@ -123,9 +123,9 @@ export default function Navbar() {
 
   return (
     <>
-      {/* 1. Top Announcement Notice (Hidden on mobile to save screen space) */}
-      <div className="hidden sm:block bg-gradient-to-r from-primary to-primary-hover text-white text-xs font-semibold py-1.5 px-3 text-center tracking-wide overflow-hidden truncate">
-        🎉 Free Express Delivery on orders above ₹{settings?.shipping?.freeShippingThreshold || 500} | Use Code <span className="underline font-bold">WELCOME15</span> for 15% OFF
+      {/* 1. Top Announcement Notice (High-contrast slate-900 with clear readable text, hidden on mobile) */}
+      <div className="hidden sm:block bg-slate-900 text-white dark:bg-slate-950 text-xs font-semibold py-1.5 px-3 text-center tracking-wide overflow-hidden truncate border-b border-slate-800">
+        🎉 Free Express Delivery on orders above ₹{settings?.shipping?.freeShippingThreshold || 500} | Use Code <span className="underline font-bold text-amber-300">WELCOME15</span> for 15% OFF
       </div>
 
       {/* 2. Main Header (Sticky and Fixed to Top-0) */}
@@ -150,7 +150,7 @@ export default function Navbar() {
                   <span className="text-sm sm:text-xl font-black text-slate-900 dark:text-white tracking-tight leading-none group-hover:text-primary transition-colors truncate">
                     {settings?.storeName || "NovaStore"}
                   </span>
-                  <span className="hidden sm:block text-xs text-slate-500 dark:text-slate-400 font-medium tracking-widest uppercase mt-0.5 truncate">
+                  <span className="hidden sm:block text-xs text-slate-700 dark:text-slate-300 font-semibold tracking-widest uppercase mt-0.5 truncate">
                     {settings?.tagline || "Multi-Category Store"}
                   </span>
                 </div>
@@ -160,7 +160,7 @@ export default function Navbar() {
             {/* Middle: Desktop Search Bar */}
             <div className="hidden md:flex flex-1 max-w-lg relative mx-4">
               <form onSubmit={handleSearchSubmit} className="w-full relative">
-                <Search size={17} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                <Search size={17} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400" />
                 <input
                   type="text"
                   value={searchQuery}
@@ -170,7 +170,7 @@ export default function Navbar() {
                   }}
                   onFocus={() => setShowSuggestions(true)}
                   placeholder="Search products, brands, clothing, electronics..."
-                  className="w-full pl-10 pr-20 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-100/80 focus:bg-white dark:focus:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary transition-all"
+                  className="w-full pl-10 pr-20 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-100/80 focus:bg-white dark:focus:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-2xl text-xs text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary transition-all"
                 />
                 <button
                   type="submit"
@@ -421,7 +421,7 @@ export default function Navbar() {
                 {cat.name}
               </Link>
             ))}
-            <Link to="/shop?sort=popular" className="text-amber-500 hover:underline flex items-center gap-1">
+            <Link to="/shop?sort=popular" className="text-amber-800 dark:text-amber-400 font-bold hover:underline flex items-center gap-1">
               <span>🔥 Flash Deals</span>
             </Link>
           </div>
@@ -433,7 +433,7 @@ export default function Navbar() {
             className="md:hidden border-t border-slate-200 dark:border-slate-800 p-3 bg-white dark:bg-slate-900 overflow-hidden animate-in fade-in duration-200"
           >
             <form onSubmit={handleSearchSubmit} className="relative">
-              <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+              <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400" />
               <input
                 type="text"
                 value={searchQuery}
@@ -443,7 +443,7 @@ export default function Navbar() {
                 }}
                 autoFocus
                 placeholder="Search products, brands, mobile..."
-                className="w-full pl-10 pr-20 py-2.5 bg-slate-100 dark:bg-slate-800 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full pl-10 pr-20 py-2.5 bg-slate-100 dark:bg-slate-800 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary"
               />
               <button
                 type="submit"
@@ -607,7 +607,7 @@ export default function Navbar() {
                     <Link
                       to="/shop?sort=popular"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950/20 transition-colors"
+                      className="flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold text-amber-800 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/20 transition-colors"
                     >
                       <span>⚡ Flash Sale Deals</span>
                       <ChevronRight size={13} />
@@ -617,7 +617,7 @@ export default function Navbar() {
 
                 {/* Customer Account shortcuts */}
                 <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
                     Account & Shortcuts
                   </span>
                   <div className="space-y-1">
