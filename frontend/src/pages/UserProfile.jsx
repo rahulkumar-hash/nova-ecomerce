@@ -54,6 +54,7 @@ export default function UserProfile() {
 
   // Add Address Form State
   const [showAddressModal, setShowAddressModal] = useState(false);
+  const [savingAddress, setSavingAddress] = useState(false);
   const [newAddress, setNewAddress] = useState({
     name: user?.name || "",
     phone: user?.phone || "",
@@ -118,18 +119,40 @@ export default function UserProfile() {
 
   const handleCreateAddress = async (e) => {
     e.preventDefault();
-    const success = await addAddress(newAddress);
-    if (success) {
-      setShowAddressModal(false);
-      setNewAddress({
-        name: user?.name || "",
-        phone: user?.phone || "",
-        street: "",
-        city: "",
-        state: "",
-        pincode: "",
-        country: "India",
-      });
+    if (savingAddress) return;
+    if (!newAddress.name?.trim() || !newAddress.phone?.trim() || !newAddress.street?.trim() || !newAddress.city?.trim() || !newAddress.pincode?.trim()) {
+      toast.error("Please fill in all address fields");
+      return;
+    }
+
+    const isDup = user?.addresses?.some(
+      (a) =>
+        a.street?.trim().toLowerCase() === newAddress.street.trim().toLowerCase() &&
+        a.pincode?.trim() === newAddress.pincode.trim() &&
+        a.phone?.trim() === newAddress.phone.trim()
+    );
+    if (isDup) {
+      toast.error("This address is already in your saved addresses");
+      return;
+    }
+
+    setSavingAddress(true);
+    try {
+      const success = await addAddress(newAddress);
+      if (success) {
+        setShowAddressModal(false);
+        setNewAddress({
+          name: user?.name || "",
+          phone: user?.phone || "",
+          street: "",
+          city: "",
+          state: "",
+          pincode: "",
+          country: "India",
+        });
+      }
+    } finally {
+      setSavingAddress(false);
     }
   };
 
@@ -319,67 +342,90 @@ export default function UserProfile() {
               {(Array.isArray(orders) ? orders : []).map((ord) => (
                 <div
                   key={ord._id}
-                  className="p-5 sm:p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:border-slate-300 dark:hover:border-slate-700"
+                  className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs transition-all hover:border-slate-300 dark:hover:border-slate-700 space-y-3"
                 >
-                  <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
-                    <div>
-                      <div className="flex items-center gap-3">
-                        <span className="font-bold text-slate-900 dark:text-white">#{ord.orderNumber}</span>
+                  {/* Top Bar: Order ID, Status, and Total Price */}
+                  <div className="flex items-start justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
+                    <div className="space-y-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white tracking-wide">
+                          #{ord.orderNumber}
+                        </span>
                         {getStatusBadge(ord.orderStatus || ord.status || "Pending")}
                       </div>
-                      <p className="text-xs text-slate-500 mt-1">
-                        Placed on {new Date(ord.createdAt).toLocaleDateString("en-IN", {
+                      <p className="text-[11px] text-slate-500">
+                        {new Date(ord.createdAt).toLocaleDateString("en-IN", {
                           day: "numeric",
                           month: "short",
-                          year: "numeric"
-                        })} • Invoice: {ord.invoiceNumber}
+                          year: "numeric",
+                        })}
+                        {ord.paymentInfo?.method || ord.paymentMethod ? ` • ${ord.paymentInfo?.method || ord.paymentMethod}` : ""}
                       </p>
                     </div>
 
-                    <div className="text-right">
-                      <p className="text-lg font-extrabold text-primary">₹{ord.pricing?.totalAmount ?? ord.totalAmount}</p>
-                      <p className="text-xs text-slate-500">{ord.paymentInfo?.method || ord.paymentMethod || "COD"} • {ord.paymentInfo?.status || ord.paymentStatus || "Pending"}</p>
+                    <div className="text-right shrink-0">
+                      <p className="text-base sm:text-lg font-extrabold text-primary font-mono">
+                        ₹{(ord.pricing?.totalAmount ?? ord.totalAmount)?.toLocaleString()}
+                      </p>
+                      <span className="text-[10px] font-medium text-slate-400 block">
+                        {ord.items?.length || 0} {(ord.items?.length === 1) ? "item" : "items"}
+                      </span>
                     </div>
                   </div>
 
-                  {/* Items thumbnail list */}
-                  <div className="py-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                    {ord.items?.map((item, idx) => (
-                      <div key={idx} className="flex items-center gap-3 p-2 rounded-xl bg-slate-50 dark:bg-slate-800/40">
+                  {/* Items thumbnail row */}
+                  <div className="space-y-2">
+                    {ord.items?.slice(0, 3).map((item, idx) => (
+                      <div
+                        key={idx}
+                        className="flex items-center gap-2.5 p-2 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800/80"
+                      >
                         <img
                           src={item.image || "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=100"}
                           alt={item.name}
-                          className="w-12 h-12 rounded-lg object-cover bg-slate-200 dark:bg-slate-700"
+                          className="w-11 h-11 rounded-lg object-cover bg-slate-200 dark:bg-slate-700 shrink-0"
                         />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs font-bold text-slate-900 dark:text-white line-clamp-1">{item.name}</p>
-                          {item.variantTitle && <p className="text-[11px] text-slate-500">{item.variantTitle}</p>}
-                          <p className="text-[11px] text-slate-500">Qty: {item.quantity} • ₹{item.price}</p>
+                        <div className="flex-1 min-w-0 pr-1">
+                          <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                            {item.name}
+                          </p>
+                          <div className="flex items-center gap-2 text-[11px] text-slate-500 mt-0.5">
+                            {item.variantTitle && <span className="truncate max-w-[100px]">{item.variantTitle}</span>}
+                            <span>Qty: {item.quantity}</span>
+                            <span className="font-semibold text-slate-700 dark:text-slate-300">₹{item.price?.toLocaleString()}</span>
+                          </div>
                         </div>
                       </div>
                     ))}
+                    {ord.items?.length > 3 && (
+                      <p className="text-[11px] font-medium text-slate-500 pl-1">
+                        + {ord.items.length - 3} more {ord.items.length - 3 === 1 ? "product" : "products"} in this order
+                      </p>
+                    )}
                   </div>
 
-                  {/* Order Actions */}
-                  <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                    <p className="text-xs text-slate-500 flex items-center gap-1.5">
-                      <Truck className="w-3.5 h-3.5 text-primary" /> Delivery to {ord.shippingAddress?.city}, {ord.shippingAddress?.state}
+                  {/* Footer / Actions */}
+                  <div className="pt-2.5 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                    <p className="text-[11px] text-slate-500 flex items-center gap-1.5 truncate">
+                      <Truck className="w-3.5 h-3.5 text-primary shrink-0" />
+                      <span className="truncate">Delivery to {ord.shippingAddress?.city || "Saved Address"}, {ord.shippingAddress?.state || ""}</span>
                     </p>
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center justify-end gap-2 w-full sm:w-auto shrink-0">
                       {ord.status === "Pending" && (
                         <button
                           onClick={() => handleCancelOrder(ord._id)}
-                          className="text-xs font-semibold text-rose-600 hover:text-rose-700"
+                          className="px-3 py-1.5 rounded-xl text-xs font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors"
                         >
                           Cancel Order
                         </button>
                       )}
                       <Link
                         to={`/order/${ord._id}`}
-                        className="text-xs font-bold text-primary hover:underline flex items-center gap-1"
+                        className="w-full sm:w-auto px-4 py-1.5 rounded-xl text-xs font-bold text-primary bg-primary/10 hover:bg-primary hover:text-white transition-all flex items-center justify-center gap-1 shadow-2xs"
                       >
-                        View Order Details <ChevronRight className="w-3.5 h-3.5" />
+                        <span>View Details</span>
+                        <ChevronRight className="w-3.5 h-3.5" />
                       </Link>
                     </div>
                   </div>
@@ -540,7 +586,7 @@ export default function UserProfile() {
 
           {/* Right Side Info Card (4 cols on lg) */}
           <div className="lg:col-span-4 space-y-4">
-            <div className="p-6 rounded-3xl bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 space-y-4">
+            <div className="p-5 sm:p-6 rounded-3xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
               <div className="flex items-center gap-2 text-slate-900 dark:text-white font-bold text-sm pb-2 border-b border-slate-200 dark:border-slate-800">
                 <ShieldCheck className="w-5 h-5 text-emerald-500" />
                 <span>Account Overview</span>
@@ -689,9 +735,11 @@ export default function UserProfile() {
                   </button>
                   <button
                     type="submit"
-                    className="px-6 py-2 rounded-xl text-sm font-bold text-white bg-primary hover:bg-primary-hover"
+                    disabled={savingAddress}
+                    className="px-6 py-2 rounded-xl text-sm font-bold text-white bg-primary hover:bg-primary-hover disabled:opacity-50 flex items-center gap-2"
                   >
-                    Save Address
+                    {savingAddress && <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />}
+                    <span>{savingAddress ? "Saving..." : "Save Address"}</span>
                   </button>
                 </div>
               </form>

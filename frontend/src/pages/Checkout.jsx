@@ -13,7 +13,9 @@ import {
   ChevronRight,
   AlertCircle,
   Zap,
-  Sparkles
+  Sparkles,
+  Check,
+  X
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCart } from "../context/CartContext";
@@ -58,7 +60,9 @@ export default function Checkout() {
 
   const [step, setStep] = useState(1); // 1: Address, 2: Payment, 3: Review
   const [selectedAddressIndex, setSelectedAddressIndex] = useState(0);
+  const [showChangeAddressModal, setShowChangeAddressModal] = useState(false);
   const [showNewAddressModal, setShowNewAddressModal] = useState(false);
+  const [savingAddress, setSavingAddress] = useState(false);
   const [newAddress, setNewAddress] = useState({
     name: user?.name || "",
     phone: user?.phone || "",
@@ -67,7 +71,7 @@ export default function Checkout() {
     state: "",
     pincode: "",
     country: "India",
-    isDefault: true,
+    isDefault: false,
   });
 
   const [paymentMethod, setPaymentMethod] = useState("Cash on Delivery");
@@ -92,7 +96,20 @@ export default function Checkout() {
   }, [cartItems, navigate]);
 
   const addresses = user?.addresses || [];
-  const activeAddress = addresses[selectedAddressIndex] || null;
+
+  // Auto-select primary/default address
+  useEffect(() => {
+    if (addresses.length > 0) {
+      const defaultIdx = addresses.findIndex((a) => a.isDefault);
+      if (defaultIdx !== -1) {
+        setSelectedAddressIndex(defaultIdx);
+      } else if (selectedAddressIndex >= addresses.length) {
+        setSelectedAddressIndex(0);
+      }
+    }
+  }, [user?.addresses]);
+
+  const activeAddress = addresses[selectedAddressIndex] || addresses[0] || null;
 
   // Store payment config from admin settings
   const codEnabled = settings?.paymentMethods?.cod?.enabled !== false;
@@ -110,14 +127,44 @@ export default function Checkout() {
 
   const handleCreateAddress = async (e) => {
     e.preventDefault();
-    if (!newAddress.name || !newAddress.phone || !newAddress.street || !newAddress.city || !newAddress.pincode) {
-      toast.error("Please fill in all address fields");
+    if (savingAddress) return;
+
+    if (!newAddress.name?.trim() || !newAddress.phone?.trim() || !newAddress.street?.trim() || !newAddress.city?.trim() || !newAddress.pincode?.trim()) {
+      toast.error("Please fill in all required address fields");
       return;
     }
-    const success = await addAddress(newAddress);
-    if (success) {
-      setShowNewAddressModal(false);
-      setSelectedAddressIndex(addresses.length);
+
+    // Prevent duplicate address entry
+    const isDuplicate = addresses.some(
+      (a) =>
+        a.street?.trim().toLowerCase() === newAddress.street.trim().toLowerCase() &&
+        a.pincode?.trim() === newAddress.pincode.trim() &&
+        a.phone?.trim() === newAddress.phone.trim()
+    );
+    if (isDuplicate) {
+      toast.error("This address is already in your saved addresses");
+      return;
+    }
+
+    setSavingAddress(true);
+    try {
+      const success = await addAddress(newAddress);
+      if (success) {
+        setShowNewAddressModal(false);
+        setSelectedAddressIndex(addresses.length);
+        setNewAddress({
+          name: user?.name || "",
+          phone: user?.phone || "",
+          street: "",
+          city: "",
+          state: "",
+          pincode: "",
+          country: "India",
+          isDefault: false,
+        });
+      }
+    } finally {
+      setSavingAddress(false);
     }
   };
 
@@ -344,44 +391,63 @@ export default function Checkout() {
                   </button>
                 </div>
 
-                {addresses.length === 0 ? (
+                {!activeAddress || addresses.length === 0 ? (
                   <div className="p-8 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl text-center space-y-3">
                     <MapPin className="w-10 h-10 text-slate-400 mx-auto" />
                     <p className="font-bold text-slate-900 dark:text-white text-sm">No saved addresses found</p>
                     <p className="text-xs text-slate-500">Please add your shipping address to proceed with order delivery</p>
                     <button
+                      type="button"
                       onClick={() => setShowNewAddressModal(true)}
-                      className="px-6 py-2.5 rounded-xl font-bold text-white bg-primary text-xs"
+                      className="px-6 py-2.5 rounded-xl font-bold text-white bg-primary text-xs shadow-md shadow-primary/20"
                     >
                       Add Address
                     </button>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                    {addresses.map((addr, idx) => (
-                      <div
-                        key={addr._id || idx}
-                        onClick={() => setSelectedAddressIndex(idx)}
-                        className={`p-3.5 sm:p-4 rounded-xl sm:rounded-2xl border-2 cursor-pointer transition-all relative break-words min-w-0 ${
-                          selectedAddressIndex === idx
-                            ? "border-primary bg-primary/5 shadow-xs"
-                            : "border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
-                        }`}
-                      >
-                        <div className="flex items-start justify-between">
-                          <div className="min-w-0 flex-1 pr-2">
-                            <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white truncate block">{addr.name}</span>
-                            <span className="text-xs text-slate-500 block">{addr.phone}</span>
-                          </div>
-                          {selectedAddressIndex === idx && (
-                            <CheckCircle2 size={18} className="text-primary shrink-0" />
+                  <div className="p-4 sm:p-5 rounded-2xl border-2 border-primary/40 bg-primary/5 dark:bg-primary/10 relative">
+                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                      <div className="space-y-1 flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
+                            {activeAddress.name}
+                          </span>
+                          <span className="text-xs text-slate-500 font-medium">
+                            • {activeAddress.phone}
+                          </span>
+                          {activeAddress.isDefault && (
+                            <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-primary/15 text-primary border border-primary/20">
+                              PRIMARY
+                            </span>
                           )}
                         </div>
-                        <p className="text-xs text-slate-600 dark:text-slate-300 mt-2 line-clamp-2 break-words">
-                          {addr.street}, {addr.city}, {addr.state} - {addr.pincode}
+                        <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed pt-1">
+                          {activeAddress.street}, {activeAddress.city}, {activeAddress.state} - <span className="font-semibold text-slate-900 dark:text-white">{activeAddress.pincode}</span>
                         </p>
+                        {activeAddress.country && activeAddress.country !== "India" && (
+                          <p className="text-xs text-slate-500">{activeAddress.country}</p>
+                        )}
                       </div>
-                    ))}
+
+                      <div className="flex items-center gap-2 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-200/60 dark:border-slate-800">
+                        {addresses.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => setShowChangeAddressModal(true)}
+                            className="px-3.5 py-1.5 rounded-xl text-xs font-bold text-primary bg-white dark:bg-slate-800 border border-primary/30 hover:bg-primary hover:text-white transition-all shadow-xs"
+                          >
+                            Change
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => setShowNewAddressModal(true)}
+                          className="px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-slate-400 transition-all shadow-xs flex items-center gap-1"
+                        >
+                          <Plus size={13} /> Add
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 )}
 
@@ -399,7 +465,7 @@ export default function Checkout() {
             </motion.div>
           )}
 
-          {/* STEP 2: Payment Options (Only COD and Online Razorpay as controlled by Admin) */}
+          {/* STEP 2: Payment Options */}
           {step === 2 && (
             <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} className="space-y-6 w-full min-w-0">
               <div className="p-3.5 sm:p-7 rounded-2xl sm:rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-4 sm:space-y-5 w-full max-w-full overflow-hidden">
@@ -407,12 +473,12 @@ export default function Checkout() {
                   <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
                     <CreditCard className="w-5 h-5 text-primary" /> Choose Payment Option
                   </h2>
-                  <p className="text-xs text-slate-500 mt-0.5">Select your preferred payment gateway</p>
+                  <p className="text-xs text-slate-500 mt-0.5">Select your preferred payment method</p>
                 </div>
 
                 <div className="space-y-3">
                   {/* Option 1: Cash on Delivery */}
-                  {codEnabled ? (
+                  {codEnabled && (
                     <label
                       className={`flex items-start gap-3 sm:gap-4 p-3.5 sm:p-4 rounded-xl sm:rounded-2xl border-2 cursor-pointer transition-all w-full min-w-0 ${
                         paymentMethod === "Cash on Delivery"
@@ -436,23 +502,16 @@ export default function Checkout() {
                           <p className="font-bold text-slate-900 dark:text-white text-sm">
                             {settings?.paymentMethods?.cod?.label || "Cash on Delivery (COD)"}
                           </p>
-                          <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-500/10 text-emerald-600">
-                            Available
-                          </span>
                         </div>
                         <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                           {settings?.paymentMethods?.cod?.description || "Pay with cash or UPI upon doorstep delivery."}
                         </p>
                       </div>
                     </label>
-                  ) : (
-                    <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 text-xs text-slate-400">
-                      🚫 Cash on Delivery is currently disabled by store management.
-                    </div>
                   )}
 
-                  {/* Option 2: Razorpay Online Payment */}
-                  {razorpayEnabled ? (
+                  {/* Option 2: Online Payment */}
+                  {razorpayEnabled && (
                     <label
                       className={`flex items-start gap-3 sm:gap-4 p-3.5 sm:p-4 rounded-xl sm:rounded-2xl border-2 cursor-pointer transition-all w-full min-w-0 ${
                         paymentMethod === "Online Payment"
@@ -474,20 +533,19 @@ export default function Checkout() {
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
                           <p className="font-bold text-slate-900 dark:text-white text-sm">
-                            {settings?.paymentMethods?.razorpay?.label || "Online Payment (Razorpay)"}
+                            Online Payments
                           </p>
-                          <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-primary/10 text-primary">
-                            Instant Verified
-                          </span>
                         </div>
                         <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                           {settings?.paymentMethods?.razorpay?.description || "Pay securely via Google Pay, PhonePe, Paytm, Cards, NetBanking & Wallets."}
                         </p>
                       </div>
                     </label>
-                  ) : (
+                  )}
+
+                  {!codEnabled && !razorpayEnabled && (
                     <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 text-xs text-slate-400">
-                      🚫 Online Razorpay payments are currently disabled by store management.
+                      No payment methods are currently available. Please contact store management.
                     </div>
                   )}
                 </div>
@@ -601,7 +659,7 @@ export default function Checkout() {
                     ) : (
                       <>
                         <Zap size={16} />
-                        <span>{paymentMethod === "Cash on Delivery" ? "Confirm Order (COD)" : "Pay with Razorpay"} (₹{grandTotal?.toLocaleString()})</span>
+                        <span>{paymentMethod === "Cash on Delivery" ? `Confirm Order (COD) • ₹${grandTotal?.toLocaleString()}` : `Pay ₹${grandTotal?.toLocaleString()}`}</span>
                       </>
                     )}
                   </button>
@@ -628,41 +686,179 @@ export default function Checkout() {
             <div className="flex justify-between text-slate-600 dark:text-slate-400">
               <span>Shipping Fee:</span>
               <span className="font-mono text-slate-900 dark:text-white font-semibold">
-                {shippingFee === 0 ? <span className="text-emerald-600 font-bold">FREE</span> : `₹${shippingFee}`}
+                {shippingFee === 0 ? "FREE" : `₹${shippingFee}`}
               </span>
             </div>
-            <div className="flex justify-between text-slate-600 dark:text-slate-400">
-              <span>GST Taxes (5% Incl.):</span>
-              <span className="font-mono text-slate-900 dark:text-white font-semibold">₹{tax?.toLocaleString()}</span>
-            </div>
-            <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-between items-baseline font-black text-slate-900 dark:text-white text-sm">
+            {tax > 0 && (
+              <div className="flex justify-between text-slate-600 dark:text-slate-400">
+                <span>Estimated Tax:</span>
+                <span className="font-mono text-slate-900 dark:text-white font-semibold">₹{tax}</span>
+              </div>
+            )}
+            <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-between text-sm font-extrabold text-slate-900 dark:text-white">
               <span>Total Payable:</span>
-              <span className="text-xl font-mono text-primary">₹{grandTotal?.toLocaleString()}</span>
+              <span className="text-primary font-mono">₹{grandTotal?.toLocaleString()}</span>
             </div>
 
-            <div className="mt-4 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 text-[11px] text-slate-500 space-y-1.5">
-              <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300 font-bold">
-                <ShieldCheck size={14} className="text-emerald-500" />
-                <span>100% Encrypted Payment</span>
+            {/* Delivery Option Selector */}
+            <div className="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-2">
+              <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                Select Shipping Speed
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setDeliveryOption("standard")}
+                  className={`p-2.5 rounded-xl border text-left transition-all ${
+                    deliveryOption === "standard"
+                      ? "border-primary bg-primary/5 text-primary font-bold shadow-2xs"
+                      : "border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400"
+                  }`}
+                >
+                  <p className="text-xs">Standard (3-5d)</p>
+                  <p className="text-[10px] text-slate-400">Regular Speed</p>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDeliveryOption("express")}
+                  className={`p-2.5 rounded-xl border text-left transition-all ${
+                    deliveryOption === "express"
+                      ? "border-primary bg-primary/5 text-primary font-bold shadow-2xs"
+                      : "border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400"
+                  }`}
+                >
+                  <p className="text-xs">Express (1-2d)</p>
+                  <p className="text-[10px] text-slate-400">+₹50 priority</p>
+                </button>
               </div>
-              <p>Supports Razorpay 3D-Secure UPI, Cards, NetBanking & Doorstep Cash on Delivery.</p>
+            </div>
+
+            {/* Trust Badges */}
+            <div className="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-2 text-[11px] text-slate-500">
+              <div className="flex items-center gap-2">
+                <ShieldCheck size={14} className="text-emerald-500 shrink-0" />
+                <span>256-bit encrypted secure checkout</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Truck size={14} className="text-primary shrink-0" />
+                <span>Trackable express shipping updates</span>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* New Address Modal */}
+      {/* Change Address Modal */}
       <AnimatePresence>
-        {showNewAddressModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
+        {showChangeAddressModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-lg p-6 shadow-2xl space-y-4"
+              className="bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-6 max-w-lg w-full max-h-[85vh] flex flex-col border border-slate-200 dark:border-slate-800 shadow-2xl"
             >
-              <h3 className="text-base font-bold text-slate-900 dark:text-white">Add Delivery Address</h3>
-              <form onSubmit={handleCreateAddress} className="space-y-3 text-xs">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                <div>
+                  <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
+                    Select Delivery Address
+                  </h3>
+                  <p className="text-xs text-slate-500">Choose where to deliver this order</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowChangeAddressModal(false)}
+                  className="p-1 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="overflow-y-auto space-y-3 py-4 flex-1 pr-1">
+                {addresses.map((addr, idx) => {
+                  const isSelected = selectedAddressIndex === idx;
+                  return (
+                    <div
+                      key={addr._id || idx}
+                      onClick={() => {
+                        setSelectedAddressIndex(idx);
+                        setShowChangeAddressModal(false);
+                      }}
+                      className={`p-3.5 rounded-2xl border-2 cursor-pointer transition-all flex items-start justify-between gap-3 ${
+                        isSelected
+                          ? "border-primary bg-primary/5 dark:bg-primary/10 shadow-xs"
+                          : "border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
+                      }`}
+                    >
+                      <div className="space-y-0.5 flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
+                            {addr.name}
+                          </span>
+                          <span className="text-xs text-slate-500">{addr.phone}</span>
+                          {addr.isDefault && (
+                            <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-primary/15 text-primary">
+                              PRIMARY
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-slate-600 dark:text-slate-300 line-clamp-2">
+                          {addr.street}, {addr.city}, {addr.state} - {addr.pincode}
+                        </p>
+                      </div>
+
+                      <div className="pt-0.5 shrink-0">
+                        <div
+                          className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
+                            isSelected
+                              ? "border-primary bg-primary text-white"
+                              : "border-slate-300 dark:border-slate-600"
+                          }`}
+                        >
+                          {isSelected && <Check size={12} className="stroke-[3]" />}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowChangeAddressModal(false);
+                    setShowNewAddressModal(true);
+                  }}
+                  className="text-xs font-bold text-primary hover:underline flex items-center gap-1"
+                >
+                  <Plus size={14} /> Add New Address
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowChangeAddressModal(false)}
+                  className="px-5 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                >
+                  Close
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* New Address Modal */}
+      <AnimatePresence>
+        {showNewAddressModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white dark:bg-slate-900 rounded-3xl p-6 max-w-md w-full border border-slate-200 dark:border-slate-800 shadow-2xl"
+            >
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">Add Delivery Address</h3>
+              <form onSubmit={handleCreateAddress} className="space-y-3.5 text-xs">
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block font-semibold text-slate-600 dark:text-slate-400 mb-1">Full Name</label>
@@ -740,9 +936,11 @@ export default function Checkout() {
                   </button>
                   <button
                     type="submit"
-                    className="px-6 py-2 rounded-xl font-bold text-white bg-primary hover:bg-primary-hover shadow-sm"
+                    disabled={savingAddress}
+                    className="px-6 py-2 rounded-xl font-bold text-white bg-primary hover:bg-primary-hover shadow-sm disabled:opacity-50 flex items-center gap-2"
                   >
-                    Save Address
+                    {savingAddress && <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />}
+                    <span>{savingAddress ? "Saving..." : "Save Address"}</span>
                   </button>
                 </div>
               </form>
