@@ -17,13 +17,14 @@ import android.os.VibrationEffect
 import android.os.Vibrator
 import android.view.KeyEvent
 import android.view.View
+import android.view.WindowManager
 import android.webkit.*
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.novastore.app.databinding.ActivityMainBinding
+import org.json.JSONObject
 import java.net.URISyntaxException
 
 class MainActivity : AppCompatActivity() {
@@ -57,6 +58,13 @@ class MainActivity : AppCompatActivity() {
 
         // Edge-to-edge system bars configuration
         WindowCompat.setDecorFitsSystemWindows(window, true)
+
+        // Apply clean initial light status bar immediately so screen doesn't show black bar
+        updateSystemBars(
+            isDark = false,
+            statusBarColor = Color.WHITE,
+            navBarColor = Color.WHITE
+        )
 
         setupBottomNav()
         setupSwipeRefresh()
@@ -151,12 +159,14 @@ class MainActivity : AppCompatActivity() {
             override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
                 binding.swipeRefresh.isRefreshing = true
                 syncBottomNavSelection(url)
+                checkThemeFromDOM()
             }
 
             override fun onPageFinished(view: WebView?, url: String?) {
                 binding.swipeRefresh.isRefreshing = false
                 injectThemeObserver()
                 injectBottomNavSpacing()
+                checkThemeFromDOM()
             }
 
             override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
@@ -206,7 +216,7 @@ class MainActivity : AppCompatActivity() {
                     return false
                 }
 
-                // 6. External non-store links (e.g. social media, external blogs) - open in browser
+                // 6. External non-store links - open in browser
                 return launchExternalUri(uri)
             }
 
@@ -220,6 +230,9 @@ class MainActivity : AppCompatActivity() {
 
         webView.webChromeClient = object : WebChromeClient() {
             override fun onProgressChanged(view: WebView?, newProgress: Int) {
+                if (newProgress >= 70) {
+                    checkThemeFromDOM()
+                }
                 if (newProgress >= 90) {
                     binding.swipeRefresh.isRefreshing = false
                 }
@@ -274,42 +287,66 @@ class MainActivity : AppCompatActivity() {
     }
 
     // ── Dynamic Theme Synchronization ────────────────────────────────
+    private fun checkThemeFromDOM() {
+        val script = """
+            (function() {
+                try {
+                    var isDark = document.documentElement.classList.contains('dark') || 
+                                 document.body.classList.contains('dark') || 
+                                 localStorage.getItem('themeMode') === 'dark';
+                    var primary = window.getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim() || '#6366F1';
+                    return JSON.stringify({ isDark: isDark, primary: primary });
+                } catch(e) {
+                    return JSON.stringify({ isDark: false, primary: '#6366F1' });
+                }
+            })()
+        """.trimIndent()
+
+        webView.evaluateJavascript(script) { result ->
+            if (!result.isNullOrBlank() && result != "null") {
+                try {
+                    val cleanJson = if (result.startsWith("\"") && result.endsWith("\"")) {
+                        result.substring(1, result.length - 1).replace("\\\"", "\"")
+                    } else result
+                    val json = JSONObject(cleanJson)
+                    val isDark = json.optBoolean("isDark", false)
+                    val primary = json.optString("primary", "#6366F1")
+                    applyDynamicTheme(isDark, primary)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        }
+    }
+
     private fun injectThemeObserver() {
         val js = """
             (function() {
-                function readAndSendTheme() {
+                function syncTheme() {
                     try {
-                        var isDark = document.documentElement.classList.contains('dark');
+                        var isDark = document.documentElement.classList.contains('dark') || 
+                                     document.body.classList.contains('dark') || 
+                                     localStorage.getItem('themeMode') === 'dark';
                         var primary = window.getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim() || '#6366F1';
                         
-                        // Detect header background color or fallback
-                        var header = document.querySelector('header') || document.querySelector('nav');
-                        var headerBg = '#FFFFFF';
-                        if (header) {
-                            var bg = window.getComputedStyle(header).backgroundColor;
-                            if (bg && bg !== 'transparent' && bg !== 'rgba(0, 0, 0, 0)') {
-                                headerBg = bg;
-                            }
-                        }
-                        if (isDark) {
-                            headerBg = '#0B0F19';
-                        }
-                        
                         if (window.Android && window.Android.onThemeChanged) {
-                            window.Android.onThemeChanged(isDark, primary, headerBg);
+                            window.Android.onThemeChanged(isDark, primary);
                         }
                     } catch(e) {}
                 }
                 
-                readAndSendTheme();
+                syncTheme();
                 
-                // Observe class changes on <html> for dynamic light/dark mode toggling
+                // Observe class changes on <html> and <body> for instant dark/light mode toggling
                 if (!window.__themeObserverAttached) {
                     window.__themeObserverAttached = true;
                     var observer = new MutationObserver(function() {
-                        readAndSendTheme();
+                        syncTheme();
                     });
                     observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class', 'style'] });
+                    if (document.body) {
+                        observer.observe(document.body, { attributes: true, attributeFilter: ['class', 'style'] });
+                    }
                 }
             })();
         """.trimIndent()
@@ -332,48 +369,80 @@ class MainActivity : AppCompatActivity() {
         webView.evaluateJavascript(js, null)
     }
 
-    private fun applyDynamicTheme(isDark: Boolean, primaryHex: String, headerBgStr: String) {
+    private fun applyDynamicTheme(isDark: Boolean, primaryHex: String) {
         runOnUiThread {
             try {
                 isDarkMode = isDark
                 val primaryColor = parseColorSafely(primaryHex, Color.parseColor("#6366F1"))
                 currentPrimaryColor = primaryColor
 
-                // Status Bar & Navigation Bar Colors
+                // In Light Mode: Status bar is pure WHITE (#FFFFFF) with dark/black icons
+                // In Dark Mode: Status bar is deep dark (#0B0F19) matching Spezx header with white icons
                 val statusBarColor = if (isDark) Color.parseColor("#0B0F19") else Color.WHITE
                 val navBarBg = if (isDark) Color.parseColor("#0F172A") else Color.WHITE
-                val navDividerColor = if (isDark) Color.parseColor("#1E293B") else Color.parseColor("#E2E8F0")
 
-                window.statusBarColor = statusBarColor
-                window.navigationBarColor = navBarBg
-
-                // Time, battery, network icon color (Light status bar = dark icons)
-                val insetsController = WindowInsetsControllerCompat(window, window.decorView)
-                insetsController.isAppearanceLightStatusBars = !isDark
-                insetsController.isAppearanceLightNavigationBars = !isDark
-
-                // Update Bottom Navigation View
-                binding.bottomNavContainer.setBackgroundColor(navBarBg)
-                binding.bottomNav.setBackgroundColor(navBarBg)
-                binding.bottomNavDivider.setBackgroundColor(navDividerColor)
-                binding.rootLayout.setBackgroundColor(if (isDark) Color.parseColor("#0B0F19") else Color.WHITE)
-
-                // Update bottom nav icon & text colors dynamically
-                val inactiveColor = if (isDark) Color.parseColor("#94A3B8") else Color.parseColor("#64748B")
-                val states = arrayOf(
-                    intArrayOf(android.R.attr.state_checked),
-                    intArrayOf(-android.R.attr.state_checked)
-                )
-                val colors = intArrayOf(primaryColor, inactiveColor)
-                val colorStateList = ColorStateList(states, colors)
-
-                binding.bottomNav.itemIconTintList = colorStateList
-                binding.bottomNav.itemTextColor = colorStateList
-                binding.swipeRefresh.setColorSchemeColors(primaryColor)
+                updateSystemBars(isDark, statusBarColor, navBarBg)
 
             } catch (e: Exception) {
                 e.printStackTrace()
             }
+        }
+    }
+
+    @Suppress("DEPRECATION")
+    private fun updateSystemBars(isDark: Boolean, statusBarColor: Int, navBarColor: Int) {
+        try {
+            window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS)
+            window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION)
+            window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
+
+            window.statusBarColor = statusBarColor
+            window.navigationBarColor = navBarColor
+
+            // 1. AndroidX WindowInsetsControllerCompat (Standard API)
+            val insetsController = WindowInsetsControllerCompat(window, window.decorView)
+            insetsController.isAppearanceLightStatusBars = !isDark
+            insetsController.isAppearanceLightNavigationBars = !isDark
+
+            // 2. SYSTEM_UI_FLAG for OEM Skins (Realme UI / ColorOS / MIUI / FuntouchOS)
+            var flags = window.decorView.systemUiVisibility
+            flags = if (!isDark) {
+                flags or View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
+            } else {
+                flags and View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR.inv()
+            }
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                flags = if (!isDark) {
+                    flags or View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR
+                } else {
+                    flags and View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR.inv()
+                }
+            }
+            window.decorView.systemUiVisibility = flags
+
+            // 3. Update view backgrounds and bottom nav colors
+            binding.rootLayout.setBackgroundColor(statusBarColor)
+            binding.bottomNavContainer.setBackgroundColor(navBarColor)
+            binding.bottomNav.setBackgroundColor(navBarColor)
+            val navDividerColor = if (isDark) Color.parseColor("#1E293B") else Color.parseColor("#E2E8F0")
+            binding.bottomNavDivider.setBackgroundColor(navDividerColor)
+
+            // Update bottom nav active and inactive icon & label colors
+            val inactiveColor = if (isDark) Color.parseColor("#94A3B8") else Color.parseColor("#64748B")
+            val states = arrayOf(
+                intArrayOf(android.R.attr.state_checked),
+                intArrayOf(-android.R.attr.state_checked)
+            )
+            val colors = intArrayOf(currentPrimaryColor, inactiveColor)
+            val colorStateList = ColorStateList(states, colors)
+
+            binding.bottomNav.itemIconTintList = colorStateList
+            binding.bottomNav.itemTextColor = colorStateList
+            binding.swipeRefresh.setColorSchemeColors(currentPrimaryColor)
+
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 
@@ -383,7 +452,6 @@ class MainActivity : AppCompatActivity() {
             if (colorStr.startsWith("#")) {
                 Color.parseColor(colorStr)
             } else if (colorStr.startsWith("rgb")) {
-                // Parse rgb(r, g, b) or rgba(r, g, b, a)
                 val nums = colorStr.replace("rgb(", "").replace("rgba(", "").replace(")", "").split(",")
                 if (nums.size >= 3) {
                     val r = nums[0].trim().toInt()
@@ -436,8 +504,8 @@ class MainActivity : AppCompatActivity() {
     inner class AndroidBridge {
 
         @JavascriptInterface
-        fun onThemeChanged(isDark: Boolean, primaryHex: String, headerBg: String) {
-            applyDynamicTheme(isDark, primaryHex, headerBg)
+        fun onThemeChanged(isDark: Boolean, primaryHex: String) {
+            applyDynamicTheme(isDark, primaryHex)
         }
 
         @JavascriptInterface
@@ -505,6 +573,7 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         webView.onResume()
+        checkThemeFromDOM()
     }
 
     override fun onPause() {

@@ -8,6 +8,7 @@ import Navbar from "./components/layout/Navbar";
 import Footer from "./components/layout/Footer";
 import CartDrawer from "./components/cart/CartDrawer";
 import PageSkeleton from "./components/common/PageSkeleton";
+import MobileInstallBanner from "./components/common/MobileInstallBanner";
 
 // Critical First-Paint Page
 import Home from "./pages/Home";
@@ -186,8 +187,9 @@ export default function App() {
 
       <Footer />
 
-      {/* Global Drawers */}
+      {/* Global Drawers & Mobile App Banner */}
       <CartDrawer />
+      <MobileInstallBanner />
     </div>
   );
 }
