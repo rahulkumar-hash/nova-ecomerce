@@ -38,6 +38,7 @@ class MainActivity : AppCompatActivity() {
     private var backPressedTime: Long = 0
     private var currentPrimaryColor = Color.parseColor("#6366F1")
     private var isDarkMode = false
+    private var popupDialog: android.app.Dialog? = null
 
     companion object {
         const val BASE_URL = "https://nova-ecommerce-store-r5ez.onrender.com"
@@ -162,8 +163,8 @@ class MainActivity : AppCompatActivity() {
             builtInZoomControls = false
             displayZoomControls = false
 
-            // IMPORTANT for Razorpay: Keep popups in the same window so 3D Secure doesn't break
-            setSupportMultipleWindows(false)
+            // Enable popup windows & multiple windows for payment gateways (Razorpay 3DS / OTP / Bank redirects)
+            setSupportMultipleWindows(true)
             javaScriptCanOpenWindowsAutomatically = true
         }
 
@@ -192,51 +193,46 @@ class MainActivity : AppCompatActivity() {
             override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                 val uri = request?.url ?: return false
                 val url = uri.toString()
+                val scheme = uri.scheme?.lowercase() ?: ""
 
                 // 1. UPI Payment Links (Google Pay, PhonePe, Paytm, BHIM, Cred, etc.)
-                if (url.startsWith("upi:") || url.startsWith("tez:") ||
-                    url.startsWith("phonepe:") || url.startsWith("paytmmp:") ||
-                    url.startsWith("credpay:") || url.startsWith("bhim:")) {
+                if (scheme == "upi" || scheme == "tez" || scheme == "phonepe" ||
+                    scheme == "paytmmp" || scheme == "credpay" || scheme == "bhim") {
                     return launchExternalUri(uri)
                 }
 
-                // 2. Android Intent URIs (Razorpay UPI fallback intents)
+                // 2. Android Intent URIs (Razorpay UPI fallback, app intents)
                 if (url.startsWith("intent:")) {
-                    try {
-                        val intent = Intent.parseUri(url, Intent.URI_INTENT_SCHEME)
-                        if (intent != null) {
-                            if (packageManager.resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY) != null) {
-                                startActivity(intent)
-                                return true
-                            }
-                            val fallbackUrl = intent.getStringExtra("browser_fallback_url")
-                            if (fallbackUrl != null) {
-                                view?.loadUrl(fallbackUrl)
-                                return true
-                            }
-                        }
-                    } catch (e: URISyntaxException) {
-                        e.printStackTrace()
-                    }
-                    return true
+                    return handleIntentUri(view, url)
                 }
 
-                // 3. Tel, Mailto, WhatsApp
-                if (url.startsWith("tel:") || url.startsWith("mailto:") || url.startsWith("whatsapp:")) {
+                // 3. Play Store Market Links
+                if (scheme == "market") {
                     return launchExternalUri(uri)
                 }
 
-                // 4. Payment Gateway and Bank Verification Domains - ALWAYS load inside WebView!
+                // 4. Tel, Mailto, WhatsApp
+                if (scheme == "tel" || scheme == "mailto" || scheme == "whatsapp") {
+                    return launchExternalUri(uri)
+                }
+
+                // 5. CRITICAL FOR RAZORPAY / BANK OTP / IFRAMES:
+                // If this is a sub-frame (iframe) navigation, NEVER intercept or push to external browser!
+                if (request != null && !request.isForMainFrame) {
+                    return false
+                }
+
+                // 6. Payment Gateway and Bank Verification Domains - ALWAYS load inside WebView!
                 if (isPaymentOrBankUrl(url)) {
                     return false
                 }
 
-                // 5. Internal Store URLs - stay inside WebView
-                if (url.startsWith(BASE_URL) || url.contains("nova-ecommerce")) {
+                // 7. Internal Store URLs - stay inside WebView
+                if (url.startsWith(BASE_URL) || url.contains("nova-ecommerce") || url.contains("onrender.com")) {
                     return false
                 }
 
-                // 6. External non-store links - open in browser
+                // 8. External non-store links - open in browser
                 return launchExternalUri(uri)
             }
 
@@ -256,6 +252,75 @@ class MainActivity : AppCompatActivity() {
                 if (newProgress >= 90) {
                     binding.swipeRefresh.isRefreshing = false
                 }
+            }
+
+            // Support popups / 3DS OTP verification windows (Razorpay, Banking, Payment Gateways)
+            override fun onCreateWindow(
+                view: WebView?,
+                isDialog: Boolean,
+                isUserGesture: Boolean,
+                resultMsg: android.os.Message?
+            ): Boolean {
+                if (resultMsg == null || view == null) return false
+
+                try {
+                    val popupWebView = WebView(this@MainActivity).apply {
+                        settings.javaScriptEnabled = true
+                        settings.domStorageEnabled = true
+                        settings.setSupportMultipleWindows(true)
+                        settings.javaScriptCanOpenWindowsAutomatically = true
+                        settings.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
+                        CookieManager.getInstance().setAcceptThirdPartyCookies(this, true)
+
+                        webViewClient = object : WebViewClient() {
+                            override fun shouldOverrideUrlLoading(v: WebView?, req: WebResourceRequest?): Boolean {
+                                val u = req?.url ?: return false
+                                val uStr = u.toString()
+                                val sch = u.scheme?.lowercase() ?: ""
+
+                                if (sch == "upi" || sch == "tez" || sch == "phonepe" ||
+                                    sch == "paytmmp" || sch == "credpay" || sch == "bhim") {
+                                    return launchExternalUri(u)
+                                }
+                                if (uStr.startsWith("intent:")) {
+                                    return handleIntentUri(v, uStr)
+                                }
+                                if (sch == "market" || sch == "tel" || sch == "mailto" || sch == "whatsapp") {
+                                    return launchExternalUri(u)
+                                }
+                                return false
+                            }
+                        }
+
+                        webChromeClient = object : WebChromeClient() {
+                            override fun onCloseWindow(window: WebView?) {
+                                popupDialog?.dismiss()
+                                popupDialog = null
+                            }
+                        }
+                    }
+
+                    popupDialog = android.app.Dialog(this@MainActivity, android.R.style.Theme_DeviceDefault_Light_NoActionBar_Fullscreen).apply {
+                        setContentView(popupWebView)
+                        setOnDismissListener {
+                            try {
+                                popupWebView.destroy()
+                            } catch (e: Exception) {}
+                            popupDialog = null
+                        }
+                        show()
+                    }
+
+                    val transport = resultMsg.obj as? WebView.WebViewTransport
+                    if (transport != null) {
+                        transport.webView = popupWebView
+                        resultMsg.sendToTarget()
+                        return true
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+                return false
             }
 
             // File chooser for image uploads (profile picture, review photos, etc.)
@@ -283,21 +348,62 @@ class MainActivity : AppCompatActivity() {
     private fun isPaymentOrBankUrl(url: String): Boolean {
         val lower = url.lowercase()
         return lower.contains("razorpay.com") ||
+               lower.contains("rzp.io") ||
                lower.contains("cashfree.com") ||
                lower.contains("payu.in") ||
                lower.contains("billdesk.com") ||
+               lower.contains("ccavenue.com") ||
+               lower.contains("juspay.in") ||
+               lower.contains("paytm.com") ||
+               lower.contains("npci.org.in") ||
                lower.contains("bank") ||
                lower.contains("gateway") ||
                lower.contains("checkout") ||
                lower.contains("card") ||
                lower.contains("otp") ||
                lower.contains("secure") ||
-               lower.contains("payment")
+               lower.contains("payment") ||
+               lower.contains("verifiedbyvisa") ||
+               lower.contains("mastercard") ||
+               lower.contains("arcot.com") ||
+               lower.contains("cardinalcommerce")
+    }
+
+    private fun handleIntentUri(view: WebView?, url: String): Boolean {
+        return try {
+            val intent = Intent.parseUri(url, Intent.URI_INTENT_SCHEME)
+            if (intent != null) {
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                if (packageManager.resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY) != null) {
+                    startActivity(intent)
+                    return true
+                }
+                val fallbackUrl = intent.getStringExtra("browser_fallback_url")
+                if (!fallbackUrl.isNullOrBlank()) {
+                    view?.loadUrl(fallbackUrl)
+                    return true
+                }
+                val pkg = intent.`package`
+                if (!pkg.isNullOrBlank()) {
+                    val marketIntent = Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$pkg")).apply {
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    }
+                    startActivity(marketIntent)
+                    return true
+                }
+            }
+            false
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
     }
 
     private fun launchExternalUri(uri: Uri): Boolean {
         return try {
-            val intent = Intent(Intent.ACTION_VIEW, uri)
+            val intent = Intent(Intent.ACTION_VIEW, uri).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
             startActivity(intent)
             true
         } catch (e: Exception) {
@@ -522,12 +628,28 @@ class MainActivity : AppCompatActivity() {
 
         @JavascriptInterface
         fun share(title: String, text: String, url: String) {
-            val intent = Intent(Intent.ACTION_SEND).apply {
-                type = "text/plain"
-                putExtra(Intent.EXTRA_SUBJECT, title)
-                putExtra(Intent.EXTRA_TEXT, "$text\n$url".trim())
+            runOnUiThread {
+                try {
+                    val shareBody = when {
+                        text.isNotBlank() && url.isNotBlank() && !text.contains(url) -> "$text\n$url"
+                        url.isNotBlank() -> url
+                        else -> text
+                    }
+                    val intent = Intent(Intent.ACTION_SEND).apply {
+                        type = "text/plain"
+                        putExtra(Intent.EXTRA_SUBJECT, title)
+                        putExtra(Intent.EXTRA_TEXT, shareBody)
+                    }
+                    val chooser = Intent.createChooser(intent, "Share via").apply {
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    }
+                    startActivity(chooser)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    copyToClipboard(url.ifEmpty { text })
+                    Toast.makeText(this@MainActivity, "Link copied to clipboard", Toast.LENGTH_SHORT).show()
+                }
             }
-            startActivity(Intent.createChooser(intent, "Share via"))
         }
 
         @JavascriptInterface
@@ -554,6 +676,11 @@ class MainActivity : AppCompatActivity() {
     // ── Navigation & Back Key ─────────────────────────────────────────
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
         if (keyCode == KeyEvent.KEYCODE_BACK) {
+            if (popupDialog != null && popupDialog?.isShowing == true) {
+                popupDialog?.dismiss()
+                popupDialog = null
+                return true
+            }
             if (webView.canGoBack()) {
                 webView.goBack()
                 return true

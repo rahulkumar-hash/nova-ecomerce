@@ -191,14 +191,53 @@ export default function ProductDetail() {
   };
 
   const handleShare = () => {
+    const shareTitle = product?.name || "NovaStore";
+    const shareUrl = window.location.href;
+    const shareText = product?.shortDescription || product?.name || "Check out this product on NovaStore!";
+
+    // 1. Android Native App Bridge
+    if (window.Android && typeof window.Android.share === "function") {
+      try {
+        window.Android.share(shareTitle, shareText, shareUrl);
+        return;
+      } catch (e) {
+        console.warn("Android native share failed:", e);
+      }
+    }
+
+    // 2. Web Share API (for Mobile Browsers)
     if (navigator.share) {
       navigator.share({
-        title: product?.name,
-        url: window.location.href,
-      }).catch(() => {});
+        title: shareTitle,
+        text: shareText,
+        url: shareUrl,
+      }).catch((err) => {
+        if (err && err.name !== "AbortError") {
+          copyShareLink(shareUrl);
+        }
+      });
+      return;
+    }
+
+    // 3. Fallback to Clipboard
+    copyShareLink(shareUrl);
+  };
+
+  const copyShareLink = (url) => {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url)
+        .then(() => toast.success("Product link copied to clipboard! 📋"))
+        .catch(() => {
+          if (window.Android && typeof window.Android.copyToClipboard === "function") {
+            window.Android.copyToClipboard(url);
+          } else {
+            toast("Link: " + url);
+          }
+        });
+    } else if (window.Android && typeof window.Android.copyToClipboard === "function") {
+      window.Android.copyToClipboard(url);
     } else {
-      navigator.clipboard.writeText(window.location.href);
-      toast.success("Product link copied to clipboard!");
+      toast("Link: " + url);
     }
   };
 
