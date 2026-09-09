@@ -5,25 +5,30 @@ import { useCart } from "../../context/CartContext";
 import { useWishlist } from "../../context/WishlistContext";
 import { useTheme } from "../../context/ThemeContext";
 
-const getOptimizedThumbnail = (url, width = 400) => {
-  if (!url) return "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&auto=format&fit=crop&q=75";
-  if (typeof url === "string" && url.includes("images.unsplash.com")) {
-    let optimized = url.replace(/w=\d+/, `w=${width}`);
-    if (!optimized.includes("w=")) {
-      optimized += `${optimized.includes("?") ? "&" : "?"}w=${width}`;
+const getOptimizedThumbnail = (url, width = 280) => {
+  if (!url) return "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=280&auto=format&fit=crop&q=75";
+  if (typeof url === "string") {
+    if (url.includes("cloudinary.com") && url.includes("/upload/")) {
+      return url.replace("/upload/", `/upload/w_${width},c_limit,q_auto:eco,f_auto/`);
     }
-    if (!optimized.includes("auto=format")) {
-      optimized += "&auto=format";
+    if (url.includes("images.unsplash.com")) {
+      let optimized = url.replace(/w=\d+/, `w=${width}`);
+      if (!optimized.includes("w=")) {
+        optimized += `${optimized.includes("?") ? "&" : "?"}w=${width}`;
+      }
+      if (!optimized.includes("auto=format")) {
+        optimized += "&auto=format";
+      }
+      if (!optimized.includes("fit=crop")) {
+        optimized += "&fit=crop";
+      }
+      if (optimized.includes("q=")) {
+        optimized = optimized.replace(/q=\d+/, "q=75");
+      } else {
+        optimized += "&q=75";
+      }
+      return optimized;
     }
-    if (!optimized.includes("fit=crop")) {
-      optimized += "&fit=crop";
-    }
-    if (optimized.includes("q=")) {
-      optimized = optimized.replace(/q=\d+/, "q=75");
-    } else {
-      optimized += "&q=75";
-    }
-    return optimized;
   }
   return url;
 };
@@ -52,21 +57,27 @@ export default function ProductCard({ product }) {
     addToCart(product, defaultVariant, 1);
   };
 
+  const rawThumb = product.thumbnail || (Array.isArray(product.images) && product.images[0]);
+  const thumbUrl = getOptimizedThumbnail(rawThumb, 280);
+  const thumbUrl2x = getOptimizedThumbnail(rawThumb, 480);
+
   return (
-    <div className="group relative bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xs hover:shadow-xl dark:hover:shadow-primary/5 transition-all duration-300 flex flex-col overflow-hidden">
+    <div className="product-card-contain group relative bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-xs hover:shadow-xl dark:hover:shadow-primary/5 transition-all duration-300 flex flex-col overflow-hidden">
       {/* Thumbnail & Badges */}
       <div className="relative aspect-square overflow-hidden bg-slate-100 dark:bg-slate-800">
         <Link to={"/product/" + product.slug} className="block w-full h-full">
           <img
-            src={getOptimizedThumbnail(product.thumbnail || (Array.isArray(product.images) && product.images[0]))}
+            src={thumbUrl}
+            srcSet={`${thumbUrl} 280w, ${thumbUrl2x} 480w`}
+            sizes="(max-width: 640px) 184px, (max-width: 1024px) 240px, 280px"
             alt={product.name || "Product"}
             loading="lazy"
             decoding="async"
-            width="400"
-            height="400"
+            width="280"
+            height="280"
             onError={(e) => {
               e.currentTarget.onerror = null;
-              e.currentTarget.src = "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&auto=format&fit=crop&q=75";
+              e.currentTarget.src = "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=280&auto=format&fit=crop&q=75";
             }}
             className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500 ease-out"
           />

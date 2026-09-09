@@ -60,27 +60,31 @@
 /* Performance: Skip layout/paint of offscreen sections until scrolled */
 .content-auto {
   content-visibility: auto;
-  contain-intrinsic-size: auto none auto 500px;
+  contain-intrinsic-size: 1px 500px;
 }
 .content-auto-banner {
   content-visibility: auto;
-  contain-intrinsic-size: auto none auto 228px;
+  contain-intrinsic-size: 1px 228px;
 }
 .content-auto-catalog {
   content-visibility: auto;
-  contain-intrinsic-size: auto none auto 650px;
+  contain-intrinsic-size: 1px 650px;
 }
 .content-auto-promo {
   content-visibility: auto;
-  contain-intrinsic-size: auto none auto 380px;
+  contain-intrinsic-size: 1px 380px;
 }
 .content-auto-trust {
   content-visibility: auto;
-  contain-intrinsic-size: auto none auto 320px;
+  contain-intrinsic-size: 1px 320px;
 }
 .content-auto-footer {
   content-visibility: auto;
-  contain-intrinsic-size: auto none auto 400px;
+  contain-intrinsic-size: 1px 400px;
+}
+.product-card-contain {
+  content-visibility: auto;
+  contain-intrinsic-size: 180px 280px;
 }
 
 .theme-btn-primary {

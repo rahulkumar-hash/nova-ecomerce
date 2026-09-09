@@ -5,10 +5,12 @@ import { useAuth } from "./context/AuthContext";
 
 // Layout & Global Overlays
 import Navbar from "./components/layout/Navbar";
-import Footer from "./components/layout/Footer";
-import CartDrawer from "./components/cart/CartDrawer";
 import PageSkeleton from "./components/common/PageSkeleton";
-import MobileInstallBanner from "./components/common/MobileInstallBanner";
+
+// Lazy-Loaded Non-Critical Components & Overlays
+const Footer = lazy(() => import("./components/layout/Footer"));
+const CartDrawer = lazy(() => import("./components/cart/CartDrawer"));
+const MobileInstallBanner = lazy(() => import("./components/common/MobileInstallBanner"));
 
 // Critical First-Paint Page
 import Home from "./pages/Home";
@@ -194,11 +196,11 @@ export default function App() {
         </Suspense>
       </main>
 
-      <Footer />
-
-      {/* Global Drawers & Mobile App Banner */}
-      <CartDrawer />
-      <MobileInstallBanner />
+      <Suspense fallback={null}>
+        <Footer />
+        <CartDrawer />
+        <MobileInstallBanner />
+      </Suspense>
     </div>
   );
 }

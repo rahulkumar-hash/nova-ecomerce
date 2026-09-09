@@ -35,7 +35,14 @@ export default function HeroSlider({ banners = [] }) {
         {safeBanners.map((slide, idx) => (
           <div
             key={slide._id || idx}
-            className={"absolute inset-0 transition-opacity duration-700 ease-in-out " + (idx === current ? "opacity-100 z-10" : "opacity-0 z-0 pointer-events-none")}
+            className={
+              "absolute inset-0 " +
+              (current === 0 && idx === 0
+                ? "opacity-100 z-10"
+                : idx === current
+                ? "opacity-100 z-10 transition-opacity duration-700 ease-in-out"
+                : "opacity-0 z-0 pointer-events-none transition-opacity duration-700 ease-in-out")
+            }
           >
             {/* Background Image with Overlay (Responsive <picture> for mobile vs desktop) */}
             {idx === 0 ? (
@@ -49,7 +56,7 @@ export default function HeroSlider({ banners = [] }) {
                   srcSet="/images/hero-tech-desktop.webp"
                 />
                 <img
-                  src="/images/hero-tech-desktop.webp"
+                  src="/images/hero-tech-mobile.webp"
                   alt={slide.title || "Featured Collection Banner"}
                   className="w-full h-full object-cover object-center"
                   width="1280"

@@ -39,24 +39,25 @@
     <meta name="twitter:image" content="https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=1200&h=630&fit=crop" />
 
     <!-- Performance: DNS Prefetch & Preconnect -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="preconnect" href="https://images.unsplash.com" />
+    <link rel="preconnect" href="https://res.cloudinary.com" crossorigin />
     <link rel="dns-prefetch" href="https://images.unsplash.com" />
+    <link rel="dns-prefetch" href="https://res.cloudinary.com" />
 
     <!-- LCP Hero Image Preload (Responsive: Mobile 640px vs Desktop 1280px) -->
     <link rel="preload" as="image" href="/images/hero-tech-mobile.webp" type="image/webp" media="(max-width: 640px)" fetchpriority="high" />
     <link rel="preload" as="image" href="/images/hero-tech-desktop.webp" type="image/webp" media="(min-width: 641px)" fetchpriority="high" />
 
-    <!-- Preload Primary WebFont to eliminate font swap layout shift (CLS: 0) -->
-    <link rel="preload" href="https://fonts.gstatic.com/s/plusjakartasans/v12/LDIoaomQNQcsA88c7O9yZ4KMCoOg4Ko20yygg_vb.woff2" as="font" type="font/woff2" crossorigin="anonymous" />
-    <link rel="preload" href="https://fonts.gstatic.com/s/plusjakartasans/v12/LDIoaomQNQcsA88c7O9yZ4KMCoOg4Ko40yygg_vbd-E.woff2" as="font" type="font/woff2" crossorigin="anonymous" />
+    <!-- Preload Primary WebFont on Desktop Only (Defer on mobile to reserve bandwidth for LCP image & FCP) -->
+    <link rel="preload" href="https://fonts.gstatic.com/s/plusjakartasans/v12/LDIoaomQNQcsA88c7O9yZ4KMCoOg4Ko20yygg_vb.woff2" as="font" type="font/woff2" crossorigin="anonymous" media="(min-width: 641px)" />
+    <link rel="preload" href="https://fonts.gstatic.com/s/plusjakartasans/v12/LDIoaomQNQcsA88c7O9yZ4KMCoOg4Ko40yygg_vbd-E.woff2" as="font" type="font/woff2" crossorigin="anonymous" media="(min-width: 641px)" />
 
     <!-- Web App Manifest (Deferred after critical head tags) -->
     <link rel="manifest" href="/site.webmanifest" />
 
-    <!-- Non-Render-Blocking Web Fonts -->
-    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Outfit:wght@600;700;800&display=swap" />
+    <!-- Non-Render-Blocking Web Fonts (Desktop preloaded to keep mobile critical path clean) -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Outfit:wght@600;700;800&display=swap" media="(min-width: 641px)" />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Outfit:wght@600;700;800&display=swap" media="print" onload="this.media='all'" />
     <noscript>
       <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Outfit:wght@600;700;800&display=swap" />
@@ -157,10 +158,89 @@
         backdrop-filter: blur(8px) !important;
         -webkit-backdrop-filter: blur(8px) !important;
       }
+      /* Critical Hero & Layout Geometry (Prevents FCP delay & layout shift) */
+      .h-\[320px\] { height: 320px; }
+      @media (min-width: 640px) {
+        .sm\:h-\[420px\] { height: 420px; }
+      }
+      @media (min-width: 768px) {
+        .md\:h-\[480px\] { height: 480px; }
+      }
     </style>
   </head>
   <body class="bg-[#fafafa] dark:bg-[#090d16] text-slate-900 dark:text-slate-100 antialiased selection:bg-indigo-500 selection:text-white">
-    <div id="root"></div>
+    <div id="root">
+      <div class="min-h-screen w-full flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
+        <!-- 1. Top Announcement Notice (Hidden on mobile) -->
+        <div class="hidden sm:block bg-slate-900 text-white dark:bg-slate-950 text-xs font-semibold py-1.5 px-3 text-center tracking-wide overflow-hidden truncate border-b border-slate-800">
+          🎉 Free Express Delivery on orders above ₹500 | Use Code <span class="underline font-bold text-amber-300">WELCOME15</span> for 15% OFF
+        </div>
+
+        <!-- 2. Sticky Main Header -->
+        <header class="sticky top-0 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-md border-b border-slate-200/80 dark:border-slate-800 transition-colors w-full">
+          <div class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-14 sm:h-20 gap-1.5 sm:gap-4">
+              <div class="flex items-center gap-1.5 sm:gap-3 min-w-0">
+                <div class="p-1.5 -ml-1 sm:p-2 sm:-ml-2 rounded-xl text-slate-700 dark:text-slate-200 lg:hidden shrink-0">
+                  <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
+                </div>
+                <a href="/" class="flex items-center gap-1.5 sm:gap-2 group min-w-0">
+                  <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-indigo-600 text-white flex items-center justify-center font-black text-base sm:text-lg shadow-md shadow-indigo-600/30 shrink-0">
+                    <svg class="w-4 h-4 sm:w-5 sm:h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+                  </div>
+                  <div class="flex flex-col min-w-0">
+                    <span class="text-sm sm:text-xl font-black text-slate-900 dark:text-white tracking-tight leading-none">
+                      NovaStore
+                    </span>
+                    <span class="hidden sm:block text-xs text-slate-700 dark:text-slate-300 font-semibold tracking-widest uppercase mt-0.5 truncate">
+                      Multi-Category Store
+                    </span>
+                  </div>
+                </a>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <!-- 3. LCP Hero Slider Container -->
+        <main class="flex-1 w-full">
+          <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-2 sm:pt-6 w-full">
+            <div class="relative w-full rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl bg-slate-900">
+              <div class="relative h-[320px] sm:h-[420px] md:h-[480px] w-full">
+                <picture class="w-full h-full block">
+                  <source media="(max-width: 640px)" srcset="/images/hero-tech-mobile.webp" />
+                  <source media="(min-width: 641px)" srcset="/images/hero-tech-desktop.webp" />
+                  <img
+                    src="/images/hero-tech-mobile.webp"
+                    alt="The Future of Tech is Here"
+                    class="w-full h-full object-cover object-center"
+                    width="1280"
+                    height="480"
+                    fetchpriority="high"
+                    loading="eager"
+                    decoding="async"
+                  />
+                </picture>
+                <div class="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-slate-950/60 to-transparent"></div>
+                <div class="absolute inset-0 flex items-center p-5 sm:p-10 md:p-14 max-w-xl">
+                  <div class="space-y-3 sm:space-y-4 text-white">
+                    <span class="inline-block px-2.5 py-1 sm:px-3 sm:py-1 rounded-full text-xs font-extrabold uppercase tracking-wider text-white bg-slate-950/80 border border-white/20 shadow-md">
+                      FLAGSHIP LAUNCH
+                    </span>
+                    <h1 class="text-2xl sm:text-4xl md:text-5xl font-black tracking-tight leading-tight">
+                      The Future of Tech is Here
+                    </h1>
+                    <p class="text-xs sm:text-base text-slate-300 font-medium">
+                      Experience next-gen speed with Apex Phone 16 Pro Max
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
