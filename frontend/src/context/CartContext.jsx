@@ -32,7 +32,8 @@ export const CartProvider = ({ children }) => {
   const addToCart = (product, variant = null, quantity = 1) => {
     let price = product.price;
     let mrp = product.mrp || product.price;
-    let image = product.thumbnail || (product.images && product.images[0]) || "";
+    const fallbackImage = product.thumbnail || (Array.isArray(product.images) && product.images[0]) || "";
+    let image = fallbackImage;
     let variantTitle = "";
     let attributes = [];
     let stock = product.stock;
@@ -40,7 +41,9 @@ export const CartProvider = ({ children }) => {
     if (product.hasVariants && variant) {
       price = variant.price;
       mrp = variant.mrp || variant.price;
-      image = variant.image || image;
+      if (variant.image && typeof variant.image === "string" && variant.image.trim() !== "") {
+        image = variant.image;
+      }
       variantTitle = variant.title || "";
       attributes = variant.attributes || [];
       stock = variant.stock;

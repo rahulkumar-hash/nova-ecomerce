@@ -169,6 +169,10 @@ export default function CartPage() {
                   <img
                     src={item.image || "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=300"}
                     alt={item.name}
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src = "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=300";
+                    }}
                     className="w-full h-full object-cover object-center hover:scale-105 transition-transform"
                   />
                 </Link>

@@ -13,7 +13,7 @@ export default function TaxInvoiceSheet({
   if (!order) return null;
 
   const symbol = settings?.currency?.symbol || "₹";
-  const storeName = settings?.warehouse?.name || settings?.storeName || "NovaStore";
+  const storeName = settings?.storeName || settings?.general?.siteName || "NovaStore";
   const storeTagline = settings?.tagline || "Authorized Single Vendor Platform";
   const storeAddress = settings?.warehouse?.address || settings?.contact?.address || "101, Tech Avenue, Silicon City, Bangalore, India";
   const storeEmail = settings?.contact?.email || "support@novastore.com";
@@ -41,55 +41,43 @@ export default function TaxInvoiceSheet({
     order.paymentInfo?.status === "Paid" ||
     order.paymentStatus === "Paid";
 
-  const handlePrint = () => {
-    window.print();
-  };
-
   return (
     <div className="space-y-4">
       {/* Top Action Bar (Hidden in Print) */}
       {showActions && (
-        <div className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-2xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 no-print">
-          <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between gap-3 p-3 sm:p-4 rounded-2xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 no-print">
+          <div className="flex items-center gap-2 min-w-0">
             {onClose && (
               <button
                 onClick={onClose}
-                className="p-2 rounded-xl bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors cursor-pointer"
+                className="p-2 rounded-xl bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors cursor-pointer shrink-0"
                 title="Back to Order View"
               >
                 <ArrowLeft size={16} />
               </button>
             )}
-            <div>
-              <span className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-                <FileText size={15} className="text-primary" />
-                <span>Official Tax Invoice Preview</span>
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <FileText size={15} className="text-primary shrink-0" />
+                <span className="text-xs font-bold text-slate-900 dark:text-white">Tax Invoice</span>
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-mono font-bold">
                   {order.invoiceNumber || `INV-${order.orderNumber}`}
                 </span>
-              </span>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                Authorized GST Invoice with Header, Footer & Watermark
+              </div>
+              <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate hidden sm:block">
+                Authorized GST Bill of Supply with Watermark & Digital Verification
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handlePrint}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-white dark:bg-slate-700 text-slate-800 dark:text-white border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600 transition-all cursor-pointer shadow-sm"
-            >
-              <Printer size={15} />
-              <span>Print Invoice</span>
-            </button>
-
+          <div className="flex items-center gap-2 shrink-0">
             {onDownload && (
               <button
                 onClick={onDownload}
                 disabled={isDownloading}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-primary hover:bg-primary-hover text-white shadow-lg shadow-primary/25 transition-all cursor-pointer disabled:opacity-50"
+                className="flex items-center gap-1.5 px-3.5 py-2 sm:px-4 sm:py-2 rounded-xl text-xs font-bold bg-primary hover:bg-primary-hover text-white shadow-md shadow-primary/25 transition-all cursor-pointer disabled:opacity-50"
               >
-                <Download size={15} />
+                <Download size={14} />
                 <span>{isDownloading ? "Generating..." : "Download Invoice"}</span>
               </button>
             )}
@@ -115,38 +103,38 @@ export default function TaxInvoiceSheet({
         </div>
 
         {/* Content Container */}
-        <div className="relative z-10 space-y-6">
+        <div className="relative z-10 space-y-5 sm:space-y-6">
           {/* 1. Header: Store Identity & Tax Document Title */}
-          <div className="flex flex-col sm:flex-row justify-between items-start pb-6 border-b-2 border-slate-200 gap-6">
-            <div className="space-y-1.5">
+          <div className="flex flex-col sm:flex-row justify-between items-start pb-4 sm:pb-6 border-b-2 border-slate-200 gap-4 sm:gap-6">
+            <div className="space-y-1">
               <div className="flex items-center gap-2">
-                <span className="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-black text-sm">
+                <span className="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-black text-sm shrink-0">
                   {storeName.charAt(0)}
                 </span>
-                <h1 className="text-2xl font-black tracking-tight text-slate-900 font-sans uppercase">
+                <h1 className="text-lg sm:text-2xl font-black tracking-tight text-slate-900 font-sans uppercase">
                   {storeName}
                 </h1>
               </div>
               <p className="text-[11px] font-semibold text-indigo-700">{storeTagline}</p>
               <p className="text-[11px] text-slate-500 max-w-md">{storeAddress}</p>
-              <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-slate-600 pt-1 font-mono">
+              <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-[11px] text-slate-600 pt-0.5 font-mono">
                 <span>GSTIN: <strong className="text-slate-900">{gstin}</strong></span>
                 <span>PAN: <strong className="text-slate-900">{pan}</strong></span>
-                <span>State Code: <strong className="text-slate-900">{stateCode}</strong></span>
+                <span>State: <strong className="text-slate-900">{stateCode}</strong></span>
               </div>
             </div>
 
-            <div className="sm:text-right space-y-1.5">
-              <span className="inline-block px-3 py-1 rounded-md bg-indigo-50 border border-indigo-200 text-indigo-900 text-xs font-black tracking-wider uppercase">
-                TAX INVOICE
-              </span>
-              <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">
-                Original for Recipient
-              </p>
-              <p className="text-[10px] text-slate-400">
-                Rule 46 GST Bill of Supply
-              </p>
-              <div className="pt-2 text-[11px] text-slate-600 space-y-0.5">
+            <div className="w-full sm:w-auto flex flex-row sm:flex-col justify-between sm:justify-start items-center sm:items-end gap-2 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
+              <div className="sm:text-right">
+                <span className="inline-block px-2.5 py-0.5 rounded-md bg-indigo-50 border border-indigo-200 text-indigo-900 text-xs font-black tracking-wider uppercase">
+                  TAX INVOICE
+                </span>
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mt-0.5">
+                  Original for Recipient
+                </p>
+                <p className="text-[9px] text-slate-400">Rule 46 GST Bill of Supply</p>
+              </div>
+              <div className="text-right text-[11px] text-slate-600 space-y-0.5">
                 <p>Support: <strong className="text-slate-900">{storeEmail}</strong></p>
                 <p>Helpline: <strong className="text-slate-900">{storePhone}</strong></p>
               </div>

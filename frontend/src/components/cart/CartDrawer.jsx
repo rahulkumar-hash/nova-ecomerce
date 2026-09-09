@@ -101,8 +101,12 @@ export default function CartDrawer() {
                 <div key={item.productId + (item.variantId || "")} className="py-4 flex gap-3.5 first:pt-0 last:pb-0">
                   <img
                     src={item.image || "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=100"}
-                    alt=""
-                    className="w-16 h-16 rounded-2xl object-cover bg-slate-100 dark:bg-slate-800"
+                    alt={item.name || "Product"}
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src = "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=100";
+                    }}
+                    className="w-16 h-16 rounded-2xl object-cover bg-slate-100 dark:bg-slate-800 shrink-0"
                   />
                   <div className="flex-1 flex flex-col justify-between">
                     <div>

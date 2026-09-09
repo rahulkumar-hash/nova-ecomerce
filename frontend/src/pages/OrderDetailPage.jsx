@@ -440,6 +440,10 @@ export default function OrderDetailPage() {
                     <img
                       src={item.image || "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=100"}
                       alt={item.name}
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=100";
+                      }}
                       className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl object-cover bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shrink-0"
                     />
                     <div className="min-w-0">
