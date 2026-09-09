@@ -104,7 +104,7 @@ export default function OrderDetailPage() {
 
       toast.success("Official PDF Invoice downloaded! 📄");
     } catch (err) {
-      toast.error(err.message || "Failed to download invoice PDF");
+      toast.error(err.message || "Failed to download invoice");
     } finally {
       setDownloadingPdf(false);
     }
@@ -227,23 +227,23 @@ export default function OrderDetailPage() {
   const activeStepIdx = getStepIndex(currentStatus);
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-8">
-      {/* Navigation Breadcrumb */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-4 sm:space-y-6">
+      {/* Navigation Breadcrumb & Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
+        <div className="flex items-center gap-2.5 sm:gap-3">
           <Link
             to="/profile"
-            className="p-2.5 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+            className="p-2 sm:p-2.5 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors shrink-0"
           >
             <ArrowLeft size={18} />
           </Link>
-          <div>
-            <div className="flex items-center gap-2.5">
-              <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight font-mono">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="text-lg sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight font-mono">
                 #{order.orderNumber}
               </h1>
               <span
-                className={`px-3 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider ${
+                className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider ${
                   isCancelled
                     ? "bg-rose-500/10 text-rose-500"
                     : currentStatus === "Delivered"
@@ -254,17 +254,17 @@ export default function OrderDetailPage() {
                 {currentStatus}
               </span>
             </div>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Placed on {new Date(order.createdAt).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })} • Invoice: {order.invoiceNumber || `INV-${order.orderNumber}`}
+            <p className="text-[11px] text-slate-500 mt-0.5 truncate">
+              Placed on {new Date(order.createdAt).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })} • {order.invoiceNumber || `INV-${order.orderNumber}`}
             </p>
           </div>
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center gap-2.5">
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center w-full sm:w-auto shrink-0">
           <button
             onClick={() => setShowInvoiceModal(true)}
-            className="flex items-center gap-1.5 px-4 py-2.5 rounded-2xl font-bold text-xs text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition-all cursor-pointer shadow-sm"
+            className="flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-2xl font-bold text-xs text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition-all cursor-pointer shadow-2xs"
           >
             <FileText size={15} className="text-primary" />
             <span>View Invoice</span>
@@ -273,10 +273,10 @@ export default function OrderDetailPage() {
           <button
             onClick={handleDownloadInvoice}
             disabled={downloadingPdf}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-2xl font-bold text-xs text-white bg-primary hover:bg-primary-hover shadow-md shadow-primary/20 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 cursor-pointer"
+            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl font-bold text-xs text-white bg-primary hover:bg-primary-hover shadow-md shadow-primary/20 transition-all hover:scale-102 active:scale-98 disabled:opacity-50 cursor-pointer"
           >
             <Download size={15} />
-            <span>{downloadingPdf ? "Generating PDF..." : "Download Invoice PDF"}</span>
+            <span>{downloadingPdf ? "Downloading..." : "Download Invoice"}</span>
           </button>
         </div>
       </div>
@@ -373,36 +373,35 @@ export default function OrderDetailPage() {
 
       {/* Live Order Progress Tracker */}
       {!isCancelled ? (
-        <div className="p-6 sm:p-8 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-6">
-          <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
+        <div className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-4 sm:space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 pb-3 border-b border-slate-100 dark:border-slate-800">
             <div className="flex items-center gap-2">
               <Truck className="w-5 h-5 text-primary" />
               <h3 className="font-bold text-slate-900 dark:text-white text-sm sm:text-base">
                 Live Delivery Milestones
               </h3>
             </div>
-            <p className="text-xs text-slate-500">
+            <p className="text-[11px] text-slate-500">
               Courier: <strong className="text-slate-800 dark:text-slate-200">{order.tracking?.carrier || "Express Courier"}</strong> ({order.tracking?.trackingNumber || order.orderNumber})
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-5 gap-4 relative">
+          <div className="grid grid-cols-1 sm:grid-cols-5 gap-2.5 sm:gap-3 relative">
             {TRACKING_STEPS.map((step, idx) => {
               const isCompleted = activeStepIdx >= idx;
-              const isCurrent = activeStepIdx === idx;
 
               return (
-                <div key={step.id} className="flex sm:flex-col items-center sm:text-center gap-3 sm:gap-2">
+                <div key={step.id} className="flex sm:flex-col items-center sm:text-center gap-3 sm:gap-2 p-2 sm:p-0 rounded-xl bg-slate-50 sm:bg-transparent dark:bg-slate-800/40 sm:dark:bg-transparent">
                   <div
-                    className={`w-10 h-10 rounded-2xl flex items-center justify-center text-xs font-bold shrink-0 transition-all ${
+                    className={`w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl flex items-center justify-center text-xs font-bold shrink-0 transition-all ${
                       isCompleted
-                        ? "bg-primary text-white shadow-lg shadow-primary/25"
-                        : "bg-slate-100 dark:bg-slate-800 text-slate-400"
+                        ? "bg-primary text-white shadow-md shadow-primary/25"
+                        : "bg-slate-200 dark:bg-slate-800 text-slate-400"
                     }`}
                   >
-                    {isCompleted ? <CheckCircle2 size={18} /> : idx + 1}
+                    {isCompleted ? <CheckCircle2 size={16} /> : idx + 1}
                   </div>
-                  <div>
+                  <div className="min-w-0 flex-1 sm:flex-initial">
                     <p className={`text-xs font-bold ${isCompleted ? "text-slate-900 dark:text-white" : "text-slate-400"}`}>
                       {step.label}
                     </p>
@@ -416,7 +415,7 @@ export default function OrderDetailPage() {
           </div>
         </div>
       ) : (
-        <div className="p-6 rounded-3xl bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 flex items-center gap-3">
+        <div className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 flex items-center gap-3">
           <XCircle size={24} />
           <div>
             <h4 className="font-bold text-sm">Order Cancelled</h4>
@@ -426,39 +425,39 @@ export default function OrderDetailPage() {
       )}
 
       {/* Main Grid: Ordered Items & Details */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-8 items-start">
         {/* Left Column: Items List */}
-        <div className="lg:col-span-8 space-y-6">
-          <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
-            <h3 className="font-bold text-slate-900 dark:text-white text-base">
+        <div className="lg:col-span-8 space-y-4 sm:space-y-6">
+          <div className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-3.5">
+            <h3 className="font-bold text-slate-900 dark:text-white text-sm sm:text-base">
               Ordered Products ({order.items?.length || 0})
             </h3>
 
             <div className="divide-y divide-slate-100 dark:divide-slate-800">
               {order.items?.map((item, idx) => (
-                <div key={idx} className="py-4 flex items-center justify-between gap-4 first:pt-0 last:pb-0">
-                  <div className="flex items-center gap-4">
+                <div key={idx} className="py-3 sm:py-4 flex items-center justify-between gap-3 first:pt-0 last:pb-0">
+                  <div className="flex items-center gap-3 min-w-0">
                     <img
                       src={item.image || "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=100"}
                       alt={item.name}
-                      className="w-16 h-16 rounded-2xl object-cover bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+                      className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl object-cover bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shrink-0"
                     />
-                    <div>
-                      <h4 className="font-bold text-slate-900 dark:text-white text-sm leading-tight">
+                    <div className="min-w-0">
+                      <h4 className="font-bold text-slate-900 dark:text-white text-xs sm:text-sm leading-tight truncate">
                         {item.name}
                       </h4>
                       {item.variantTitle && (
-                        <p className="text-xs font-semibold text-primary mt-1">
+                        <p className="text-[11px] font-semibold text-primary mt-0.5 truncate">
                           {item.variantTitle}
                         </p>
                       )}
-                      <p className="text-xs text-slate-500 mt-1">
-                        Quantity: <strong>{item.quantity}</strong> × {symbol}{item.price?.toLocaleString()}
+                      <p className="text-[11px] text-slate-500 mt-0.5">
+                        Qty: <strong>{item.quantity}</strong> × {symbol}{item.price?.toLocaleString()}
                       </p>
                     </div>
                   </div>
 
-                  <div className="text-right font-mono font-bold text-sm text-slate-900 dark:text-white">
+                  <div className="text-right font-mono font-bold text-xs sm:text-sm text-slate-900 dark:text-white shrink-0">
                     {symbol}{(item.total || item.price * item.quantity)?.toLocaleString()}
                   </div>
                 </div>
@@ -468,8 +467,8 @@ export default function OrderDetailPage() {
 
           {/* Timeline History entries if any */}
           {order.tracking?.history?.length > 0 && (
-            <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
-              <h3 className="font-bold text-slate-900 dark:text-white text-sm">
+            <div className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-3">
+              <h3 className="font-bold text-slate-900 dark:text-white text-xs sm:text-sm">
                 Milestone Timestamp Log
               </h3>
               <div className="space-y-3 relative pl-4 border-l-2 border-primary/30 ml-2">
@@ -487,10 +486,10 @@ export default function OrderDetailPage() {
         </div>
 
         {/* Right Column: Address, Payment & Financial Summary */}
-        <div className="lg:col-span-4 space-y-6">
+        <div className="lg:col-span-4 space-y-4 sm:space-y-5">
           {/* Summary Box */}
-          <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3 text-xs">
-            <h3 className="font-bold text-slate-900 dark:text-white text-sm mb-3">
+          <div className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-2.5 text-xs">
+            <h3 className="font-bold text-slate-900 dark:text-white text-sm mb-2">
               Payment Summary
             </h3>
 
@@ -524,16 +523,16 @@ export default function OrderDetailPage() {
 
             <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-between items-baseline font-black text-slate-900 dark:text-white text-sm">
               <span>Grand Total:</span>
-              <span className="text-xl font-mono text-primary">
+              <span className="text-lg sm:text-xl font-mono text-primary">
                 {symbol}{(order.pricing?.totalAmount ?? order.totalAmount)?.toLocaleString()}
               </span>
             </div>
           </div>
 
           {/* Delivery Address Card */}
-          <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-2 text-xs">
+          <div className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-1.5 text-xs">
             <span className="font-bold text-slate-400 uppercase tracking-wider block mb-1 items-center gap-1.5">
-              <MapPin size={14} className="text-primary" /> Delivery Destination
+              <MapPin size={14} className="text-primary inline mr-1" /> Delivery Destination
             </span>
             <p className="font-bold text-slate-900 dark:text-white text-sm">
               {order.shippingAddress?.name || order.customerInfo?.name}
@@ -550,9 +549,9 @@ export default function OrderDetailPage() {
           </div>
 
           {/* Payment Method Card */}
-          <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-2 text-xs">
+          <div className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-1.5 text-xs">
             <span className="font-bold text-slate-400 uppercase tracking-wider block mb-1 items-center gap-1.5">
-              <CreditCard size={14} className="text-primary" /> Payment Method
+              <CreditCard size={14} className="text-primary inline mr-1" /> Payment Method
             </span>
             <p className="font-bold text-slate-900 dark:text-white">
               {order.paymentInfo?.method || order.paymentMethod || "Cash on Delivery"}
@@ -561,14 +560,14 @@ export default function OrderDetailPage() {
               Status: <span className="font-bold text-emerald-600 dark:text-emerald-400">{order.paymentInfo?.status || "Completed"}</span>
             </p>
             {order.paymentInfo?.transactionId && (
-              <p className="text-slate-500 font-mono text-[11px]">
+              <p className="text-slate-500 font-mono text-[11px] truncate">
                 Txn ID: {order.paymentInfo.transactionId}
               </p>
             )}
           </div>
 
           {/* Quick Invoice Card */}
-          <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3 text-xs">
+          <div className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-2.5 text-xs">
             <div className="flex items-center justify-between">
               <span className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
                 <FileText size={15} className="text-primary" />
@@ -579,12 +578,12 @@ export default function OrderDetailPage() {
               </span>
             </div>
             <p className="text-slate-500 dark:text-slate-400 text-[11px]">
-              Download or view official GST invoice with store branding, background watermark & digital signature.
+              Official GST invoice with store branding, background watermark & digital signature.
             </p>
             <div className="grid grid-cols-2 gap-2 pt-1">
               <button
                 onClick={() => setShowInvoiceModal(true)}
-                className="py-2 px-3 rounded-xl font-bold text-xs bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-white flex items-center justify-center gap-1 transition-colors cursor-pointer"
+                className="py-2.5 px-3 rounded-xl font-bold text-xs bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-white flex items-center justify-center gap-1 transition-colors cursor-pointer"
               >
                 <FileText size={13} />
                 <span>View Sheet</span>
@@ -592,21 +591,21 @@ export default function OrderDetailPage() {
               <button
                 onClick={handleDownloadInvoice}
                 disabled={downloadingPdf}
-                className="py-2 px-3 rounded-xl font-bold text-xs bg-primary hover:bg-primary-hover text-white flex items-center justify-center gap-1 transition-colors cursor-pointer disabled:opacity-50"
+                className="py-2.5 px-3 rounded-xl font-bold text-xs bg-primary hover:bg-primary-hover text-white flex items-center justify-center gap-1 transition-colors cursor-pointer disabled:opacity-50"
               >
                 <Download size={13} />
-                <span>PDF</span>
+                <span>{downloadingPdf ? "..." : "Download"}</span>
               </button>
             </div>
           </div>
 
           {/* Manage Order Actions */}
-          <div className="space-y-2.5">
+          <div className="space-y-2 pt-1">
             {["Pending", "Confirmed"].includes(currentStatus) && (
               <button
                 onClick={handleCancelOrder}
                 disabled={cancelling}
-                className="w-full py-3 rounded-2xl font-bold text-xs text-rose-600 hover:text-rose-700 bg-rose-50 dark:bg-rose-950/20 hover:bg-rose-100 transition-colors"
+                className="w-full py-3 rounded-2xl font-bold text-xs text-rose-600 hover:text-rose-700 bg-rose-50 dark:bg-rose-950/20 hover:bg-rose-100 transition-colors cursor-pointer"
               >
                 {cancelling ? "Cancelling Order..." : "Cancel Order"}
               </button>
@@ -615,7 +614,7 @@ export default function OrderDetailPage() {
             {currentStatus === "Delivered" && (!order.returnRequest || order.returnRequest.status === "None") && (
               <button
                 onClick={() => setShowReturnModal(true)}
-                className="w-full py-3 rounded-2xl font-bold text-xs text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/50 border border-amber-200 dark:border-amber-800 flex items-center justify-center gap-2 transition-all shadow-sm cursor-pointer"
+                className="w-full py-3 rounded-2xl font-bold text-xs text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/50 border border-amber-200 dark:border-amber-800 flex items-center justify-center gap-2 transition-all shadow-xs cursor-pointer"
               >
                 <RotateCcw size={14} />
                 <span>Request Return / Replacement</span>
@@ -624,7 +623,7 @@ export default function OrderDetailPage() {
 
             <Link
               to="/contact-us"
-              className="w-full py-3 rounded-2xl font-bold text-xs text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center justify-center gap-1.5 transition-colors"
+              className="w-full py-2.5 rounded-2xl font-bold text-xs text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center justify-center gap-1.5 transition-colors"
             >
               <HelpCircle size={14} />
               <span>Need Help with Order?</span>
@@ -757,23 +756,23 @@ export default function OrderDetailPage() {
       {/* ── Tax Invoice Full-Screen Modal ── */}
       <AnimatePresence>
         {showInvoiceModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto bg-slate-900/80 backdrop-blur-sm">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-6 overflow-y-auto bg-slate-900/80 backdrop-blur-sm">
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 15 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 15 }}
-              className="relative w-full max-w-4xl my-8 bg-white dark:bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-800"
+              className="relative w-full max-w-4xl my-2 sm:my-8 bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-800"
             >
               {/* Close Button */}
               <button
                 onClick={() => setShowInvoiceModal(false)}
-                className="absolute top-5 right-5 z-20 p-2 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-all cursor-pointer no-print"
+                className="absolute top-3 right-3 sm:top-5 sm:right-5 z-20 p-2 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-all cursor-pointer no-print"
                 title="Close Preview"
               >
                 <X size={18} />
               </button>
 
-              <div className="p-4 sm:p-6 max-h-[90vh] overflow-y-auto">
+              <div className="p-2 sm:p-6 max-h-[92vh] overflow-y-auto">
                 <TaxInvoiceSheet
                   order={order}
                   settings={settings}

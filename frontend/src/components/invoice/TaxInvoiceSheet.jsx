@@ -90,7 +90,7 @@ export default function TaxInvoiceSheet({
                 className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-primary hover:bg-primary-hover text-white shadow-lg shadow-primary/25 transition-all cursor-pointer disabled:opacity-50"
               >
                 <Download size={15} />
-                <span>{isDownloading ? "Generating PDF..." : "Download PDF"}</span>
+                <span>{isDownloading ? "Generating..." : "Download Invoice"}</span>
               </button>
             )}
           </div>
@@ -100,8 +100,7 @@ export default function TaxInvoiceSheet({
       {/* Printable Sheet Container */}
       <div
         id="printable-tax-invoice"
-        className="bg-white text-slate-800 rounded-3xl p-8 sm:p-12 shadow-2xl border border-slate-200 relative overflow-hidden font-sans text-xs leading-relaxed"
-        style={{ minHeight: "1050px" }}
+        className="bg-white text-slate-800 rounded-2xl sm:rounded-3xl p-3.5 sm:p-8 md:p-12 shadow-2xl border border-slate-200 relative overflow-hidden font-sans text-xs leading-relaxed min-h-[500px] sm:min-h-[1050px]"
       >
         {/* ── Background Watermark ── */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none z-0 overflow-hidden">
@@ -225,8 +224,8 @@ export default function TaxInvoiceSheet({
           </div>
 
           {/* 4. Products Table */}
-          <div className="overflow-hidden rounded-xl border border-slate-200">
-            <table className="w-full text-left border-collapse">
+          <div className="overflow-x-auto rounded-xl border border-slate-200 scrollbar-thin">
+            <table className="w-full text-left border-collapse min-w-[540px]">
               <thead>
                 <tr className="bg-indigo-700 text-white text-[11px] uppercase tracking-wider font-bold">
                   <th className="py-3 px-3 w-10 text-center">#</th>

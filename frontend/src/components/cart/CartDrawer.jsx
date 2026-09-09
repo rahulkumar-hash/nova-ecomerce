@@ -208,17 +208,29 @@ export default function CartDrawer() {
                 </div>
               </div>
 
-              {/* Checkout CTA */}
-              <button
-                onClick={() => {
-                  setCartDrawerOpen(false);
-                  navigate("/checkout");
-                }}
-                className="w-full py-3.5 rounded-2xl text-xs font-bold text-white flex items-center justify-center gap-2 shadow-lg bg-primary hover:bg-primary-hover transition-all hover:scale-102 active:scale-98"
-              >
-                <span>Proceed to Checkout</span>
-                <ArrowRight size={15} />
-              </button>
+              {/* Action Buttons */}
+              <div className="space-y-2 pt-1">
+                <button
+                  onClick={() => {
+                    setCartDrawerOpen(false);
+                    navigate("/checkout");
+                  }}
+                  className="w-full py-3.5 rounded-2xl text-xs sm:text-sm font-bold text-white flex items-center justify-center gap-2 shadow-lg bg-primary hover:bg-primary-hover transition-all hover:scale-102 active:scale-98"
+                >
+                  <span>Proceed to Checkout</span>
+                  <ArrowRight size={15} />
+                </button>
+
+                <button
+                  onClick={() => {
+                    setCartDrawerOpen(false);
+                    navigate("/cart");
+                  }}
+                  className="w-full py-2.5 rounded-2xl text-xs font-bold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition-all flex items-center justify-center gap-1.5"
+                >
+                  <span>View Full Cart Page</span>
+                </button>
+              </div>
             </div>
           )}
         </div>

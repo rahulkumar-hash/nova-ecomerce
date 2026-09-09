@@ -123,8 +123,8 @@ export default function Navbar() {
 
   return (
     <>
-      {/* 1. Top Announcement Notice (Scrolls away with page, NOT sticky) */}
-      <div className="bg-gradient-to-r from-primary to-primary-hover text-white text-xs font-semibold py-1.5 px-3 text-center tracking-wide overflow-hidden truncate">
+      {/* 1. Top Announcement Notice (Hidden on mobile to save screen space) */}
+      <div className="hidden sm:block bg-gradient-to-r from-primary to-primary-hover text-white text-xs font-semibold py-1.5 px-3 text-center tracking-wide overflow-hidden truncate">
         🎉 Free Express Delivery on orders above ₹{settings?.shipping?.freeShippingThreshold || 500} | Use Code <span className="underline font-bold">WELCOME15</span> for 15% OFF
       </div>
 
@@ -621,6 +621,15 @@ export default function Navbar() {
                     Account & Shortcuts
                   </span>
                   <div className="space-y-1">
+                    <Link
+                      to="/cart"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                    >
+                      <span className="flex items-center gap-2"><ShoppingBag size={14} /> My Cart</span>
+                      {totalItemsCount > 0 && <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-primary text-white">{totalItemsCount}</span>}
+                    </Link>
+
                     <Link
                       to="/wishlist"
                       onClick={() => setMobileMenuOpen(false)}

@@ -1,13 +1,13 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Heart, ShoppingBag, Star } from "lucide-react";
+import { Heart, ShoppingBag, Star, Plus, Minus } from "lucide-react";
 import { useCart } from "../../context/CartContext";
 import { useWishlist } from "../../context/WishlistContext";
 import { useTheme } from "../../context/ThemeContext";
 
 export default function ProductCard({ product }) {
   const navigate = useNavigate();
-  const { addToCart } = useCart();
+  const { addToCart, cartItems, updateQuantity, removeFromCart } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
   const { currency } = useTheme();
 
@@ -16,14 +16,17 @@ export default function ProductCard({ product }) {
   const isLiked = isInWishlist(product._id);
   const symbol = currency?.symbol || "₹";
 
+  const cartItem = cartItems?.find(
+    (item) => item.productId === product._id || item.productId === product.id
+  );
+
   const handleQuickAdd = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    if (product.hasVariants) {
-      navigate("/product/" + product.slug);
-    } else {
-      addToCart(product, null, 1);
-    }
+    const defaultVariant = product.hasVariants && Array.isArray(product.variants) && product.variants.length > 0
+      ? product.variants[0]
+      : null;
+    addToCart(product, defaultVariant, 1);
   };
 
   return (
@@ -107,14 +110,56 @@ export default function ProductCard({ product }) {
             </div>
           </div>
 
-          <button
-            onClick={handleQuickAdd}
-            aria-label={product.hasVariants ? `Select options for ${product.name}` : `Add ${product.name} to cart`}
-            className="p-2 sm:p-2.5 rounded-xl sm:rounded-2xl text-white shadow-md bg-primary hover:bg-primary-hover transition-all hover:scale-105 active:scale-95 shrink-0 cursor-pointer"
-            title={product.hasVariants ? "Select Options" : "Add to Cart"}
-          >
-            <ShoppingBag size={14} className="sm:w-4 sm:h-4" />
-          </button>
+          {cartItem ? (
+            <div
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+              }}
+              className="flex items-center bg-primary rounded-xl sm:rounded-2xl text-white shadow-md overflow-hidden shrink-0"
+            >
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (cartItem.quantity > 1) {
+                    updateQuantity(cartItem.productId, cartItem.variantId, cartItem.quantity - 1);
+                  } else {
+                    removeFromCart(cartItem.productId, cartItem.variantId);
+                  }
+                }}
+                className="px-2 py-1.5 sm:px-2.5 sm:py-2 hover:bg-primary-hover active:scale-90 transition-all font-bold text-xs"
+                title="Decrease quantity"
+              >
+                <Minus size={12} className="stroke-[3]" />
+              </button>
+              <span className="px-1 text-xs sm:text-sm font-bold min-w-[18px] text-center font-mono select-none">
+                {cartItem.quantity}
+              </span>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  updateQuantity(cartItem.productId, cartItem.variantId, cartItem.quantity + 1);
+                }}
+                className="px-2 py-1.5 sm:px-2.5 sm:py-2 hover:bg-primary-hover active:scale-90 transition-all font-bold text-xs"
+                title="Increase quantity"
+              >
+                <Plus size={12} className="stroke-[3]" />
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={handleQuickAdd}
+              aria-label={`Add ${product.name} to cart`}
+              className="p-2 sm:p-2.5 rounded-xl sm:rounded-2xl text-white shadow-md bg-primary hover:bg-primary-hover transition-all hover:scale-105 active:scale-95 shrink-0 cursor-pointer flex items-center justify-center"
+              title="Add to Cart"
+            >
+              <ShoppingBag size={14} className="sm:w-4 sm:h-4" />
+            </button>
+          )}
         </div>
       </div>
     </div>
