@@ -1,14 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
+    <!-- Dark Mode theme matching exact Spezx dark theme #0E162A -->
     <style name="Theme.NovaStore" parent="Theme.MaterialComponents.DayNight.NoActionBar">
-        <item name="colorPrimary">#0B0F19</item>
-        <item name="colorPrimaryVariant">#0B0F19</item>
+        <item name="colorPrimary">#0E162A</item>
+        <item name="colorPrimaryVariant">#0E162A</item>
         <item name="colorOnPrimary">#FFFFFF</item>
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
-        <item name="android:statusBarColor">#0B0F19</item>
+        <item name="android:statusBarColor">#0E162A</item>
         <item name="android:windowLightStatusBar">false</item>
-        <item name="android:navigationBarColor">#0F172A</item>
+        <item name="android:navigationBarColor">#0E162A</item>
         <item name="android:windowLightNavigationBar">false</item>
     </style>
 

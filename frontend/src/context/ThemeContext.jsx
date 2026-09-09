@@ -35,6 +35,13 @@ export const ThemeProvider = ({ children }) => {
       root.classList.remove("dark");
       localStorage.setItem("themeMode", "light");
     }
+
+    try {
+      if (window.Android && window.Android.onThemeChanged) {
+        const primary = window.getComputedStyle(root).getPropertyValue('--color-primary').trim() || '#6366F1';
+        window.Android.onThemeChanged(isDark, primary);
+      }
+    } catch (e) {}
   }, [isDark]);
 
   const toggleDarkMode = () => {

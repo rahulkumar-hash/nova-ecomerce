@@ -1,6 +1,6 @@
 {
-  "name": "NovaStore - Premium Shopping",
-  "short_name": "NovaStore",
+  "name": "Spezx - Premium Shopping",
+  "short_name": "Spezx",
   "icons": [
     {
       "src": "/favicon.svg",
@@ -9,8 +9,8 @@
       "purpose": "any maskable"
     }
   ],
-  "theme_color": "#4f46e5",
-  "background_color": "#090d16",
+  "theme_color": "#0E162A",
+  "background_color": "#0E162A",
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait"

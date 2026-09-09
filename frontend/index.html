@@ -17,7 +17,7 @@
     <link rel="canonical" href="https://novastore.com/" />
 
     <!-- Mobile & Browser Accent Colors -->
-    <meta name="theme-color" content="#4f46e5" />
+    <meta name="theme-color" content="#0E162A" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="NovaStore" />
@@ -130,6 +130,11 @@
             if (theme.accentColor) root.style.setProperty("--color-accent", theme.accentColor);
           }
         } catch (e) {}
+
+        // Suppress browser automatic WebAPK prompt: ensure users only download/install the official native APK
+        window.addEventListener("beforeinstallprompt", function(e) {
+          e.preventDefault();
+        });
       })();
     </script>
     <style>

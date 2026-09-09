@@ -8,6 +8,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
+import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.net.Uri
@@ -45,6 +46,7 @@ class MainActivity : AppCompatActivity() {
         const val URL_WISHLIST = "$BASE_URL/wishlist"
         const val URL_CART = "$BASE_URL/cart"
         const val URL_PROFILE = "$BASE_URL/profile"
+        const val DARK_THEME_COLOR = "#0E162A"
     }
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -59,10 +61,22 @@ class MainActivity : AppCompatActivity() {
         // System bars configuration: fitsSystemWindows ensures bottom nav is always fully visible
         WindowCompat.setDecorFitsSystemWindows(window, true)
 
+        val prefs = getSharedPreferences("novastore_prefs", Context.MODE_PRIVATE)
+        val savedTheme = prefs.getString("theme_mode", null)
+        val isInitialDark = if (savedTheme != null) {
+            savedTheme == "dark"
+        } else {
+            val nightModeFlags = resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
+            nightModeFlags == Configuration.UI_MODE_NIGHT_YES
+        }
+
+        val initialStatusColor = if (isInitialDark) Color.parseColor(DARK_THEME_COLOR) else Color.WHITE
+        val initialNavColor = if (isInitialDark) Color.parseColor(DARK_THEME_COLOR) else Color.WHITE
+
         updateSystemBars(
-            isDark = false,
-            statusBarColor = Color.WHITE,
-            navBarColor = Color.WHITE
+            isDark = isInitialDark,
+            statusBarColor = initialStatusColor,
+            navBarColor = initialNavColor
         )
 
         setupBottomNav()
@@ -158,7 +172,6 @@ class MainActivity : AppCompatActivity() {
             override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
                 binding.swipeRefresh.isRefreshing = true
                 syncBottomNavSelection(url)
-                checkThemeFromDOM()
             }
 
             override fun onPageFinished(view: WebView?, url: String?) {
@@ -372,13 +385,18 @@ class MainActivity : AppCompatActivity() {
         runOnUiThread {
             try {
                 isDarkMode = isDark
+                getSharedPreferences("novastore_prefs", Context.MODE_PRIVATE)
+                    .edit()
+                    .putString("theme_mode", if (isDark) "dark" else "light")
+                    .apply()
+
                 val primaryColor = parseColorSafely(primaryHex, Color.parseColor("#6366F1"))
                 currentPrimaryColor = primaryColor
 
                 // In Light Mode: Status bar is pure WHITE (#FFFFFF) with dark/black icons
-                // In Dark Mode: Status bar is deep dark (#0B0F19) matching Spezx header with white icons
-                val statusBarColor = if (isDark) Color.parseColor("#0B0F19") else Color.WHITE
-                val navBarBg = if (isDark) Color.parseColor("#0F172A") else Color.WHITE
+                // In Dark Mode: Status bar is deep dark #0E162A matching Spezx dark theme with white icons
+                val statusBarColor = if (isDark) Color.parseColor(DARK_THEME_COLOR) else Color.WHITE
+                val navBarBg = if (isDark) Color.parseColor(DARK_THEME_COLOR) else Color.WHITE
 
                 updateSystemBars(isDark, statusBarColor, navBarBg)
 
@@ -398,29 +416,12 @@ class MainActivity : AppCompatActivity() {
             window.statusBarColor = statusBarColor
             window.navigationBarColor = navBarColor
 
-            // 1. AndroidX WindowInsetsControllerCompat
+            // Modern AndroidX WindowInsetsControllerCompat handles light/dark status bar and navigation bar icons
             val insetsController = WindowInsetsControllerCompat(window, window.decorView)
             insetsController.isAppearanceLightStatusBars = !isDark
             insetsController.isAppearanceLightNavigationBars = !isDark
 
-            // 2. SYSTEM_UI_FLAG for Realme UI / ColorOS
-            var flags = window.decorView.systemUiVisibility
-            flags = if (!isDark) {
-                flags or View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
-            } else {
-                flags and View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR.inv()
-            }
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                flags = if (!isDark) {
-                    flags or View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR
-                } else {
-                    flags and View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR.inv()
-                }
-            }
-            window.decorView.systemUiVisibility = flags
-
-            // 3. Update view backgrounds and bottom nav colors
+            // Update root layout and bottom nav backgrounds
             binding.rootLayout.setBackgroundColor(statusBarColor)
             binding.bottomNavContainer.setBackgroundColor(navBarColor)
             binding.bottomNav.setBackgroundColor(navBarColor)

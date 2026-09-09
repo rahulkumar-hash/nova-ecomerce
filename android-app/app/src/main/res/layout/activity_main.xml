@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="@color/white"
+    android:background="?android:attr/colorBackground"
     android:fitsSystemWindows="true">
 
     <!-- Web Content Area (Fills all space above bottom nav) -->

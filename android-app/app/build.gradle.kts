@@ -11,8 +11,8 @@ android {
         applicationId = "com.novastore.app"
         minSdk = 24
         targetSdk = 34
-        versionCode = 5
-        versionName = "1.0.5"
+        versionCode = 7
+        versionName = "1.0.7"
         manifestPlaceholders["razorpay_key_id"] = "rzp_test_1DP5mmOlF5G5ag"
     }
 
