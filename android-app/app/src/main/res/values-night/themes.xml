@@ -1,16 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <!-- Base application theme with white status bar and dark icons -->
     <style name="Theme.NovaStore" parent="Theme.MaterialComponents.DayNight.NoActionBar">
-        <item name="colorPrimary">#FFFFFF</item>
-        <item name="colorPrimaryVariant">#FFFFFF</item>
-        <item name="colorOnPrimary">#000000</item>
+        <item name="colorPrimary">#0B0F19</item>
+        <item name="colorPrimaryVariant">#0B0F19</item>
+        <item name="colorOnPrimary">#FFFFFF</item>
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
-        <item name="android:statusBarColor">#FFFFFF</item>
-        <item name="android:windowLightStatusBar">true</item>
-        <item name="android:navigationBarColor">#FFFFFF</item>
-        <item name="android:windowLightNavigationBar">true</item>
+        <item name="android:statusBarColor">#0B0F19</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:navigationBarColor">#0F172A</item>
+        <item name="android:windowLightNavigationBar">false</item>
     </style>
 
     <style name="BottomNavTextActive" parent="TextAppearance.MaterialComponents.Caption">
