@@ -56,15 +56,15 @@ class MainActivity : AppCompatActivity() {
 
         webView = binding.webView
 
-        // Edge-to-edge system bars configuration
-        WindowCompat.setDecorFitsSystemWindows(window, true)
+        // True Edge-to-Edge: Status bar is completely transparent, webview header flows behind it
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        window.statusBarColor = Color.TRANSPARENT
+        window.navigationBarColor = Color.WHITE
 
-        // Apply clean initial light status bar immediately so screen doesn't show black bar
-        updateSystemBars(
-            isDark = false,
-            statusBarColor = Color.WHITE,
-            navBarColor = Color.WHITE
-        )
+        // Default light status bar (dark icons for battery/clock)
+        val insetsController = WindowInsetsControllerCompat(window, window.decorView)
+        insetsController.isAppearanceLightStatusBars = true
+        insetsController.isAppearanceLightNavigationBars = true
 
         setupBottomNav()
         setupSwipeRefresh()
@@ -396,15 +396,16 @@ class MainActivity : AppCompatActivity() {
             window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION)
             window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
 
-            window.statusBarColor = statusBarColor
+            // Keep status bar transparent so website header shows through seamlessly
+            window.statusBarColor = Color.TRANSPARENT
             window.navigationBarColor = navBarColor
 
-            // 1. AndroidX WindowInsetsControllerCompat (Standard API)
+            // 1. AndroidX WindowInsetsControllerCompat
             val insetsController = WindowInsetsControllerCompat(window, window.decorView)
             insetsController.isAppearanceLightStatusBars = !isDark
             insetsController.isAppearanceLightNavigationBars = !isDark
 
-            // 2. SYSTEM_UI_FLAG for OEM Skins (Realme UI / ColorOS / MIUI / FuntouchOS)
+            // 2. SYSTEM_UI_FLAG for Realme UI / ColorOS
             var flags = window.decorView.systemUiVisibility
             flags = if (!isDark) {
                 flags or View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
@@ -421,8 +422,7 @@ class MainActivity : AppCompatActivity() {
             }
             window.decorView.systemUiVisibility = flags
 
-            // 3. Update view backgrounds and bottom nav colors
-            binding.rootLayout.setBackgroundColor(statusBarColor)
+            // 3. Update bottom nav background and divider
             binding.bottomNavContainer.setBackgroundColor(navBarColor)
             binding.bottomNav.setBackgroundColor(navBarColor)
             val navDividerColor = if (isDark) Color.parseColor("#1E293B") else Color.parseColor("#E2E8F0")
