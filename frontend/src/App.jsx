@@ -33,10 +33,19 @@ const SignupPage = lazy(() => import("./pages/auth/SignupPage"));
 const ForgotPasswordPage = lazy(() => import("./pages/auth/ForgotPasswordPage"));
 
 function ScrollToTop() {
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
   useEffect(() => {
     window.scrollTo(0, 0);
-  }, [pathname]);
+    if (document.documentElement) document.documentElement.scrollTop = 0;
+    if (document.body) document.body.scrollTop = 0;
+
+    // Immediately synchronize active tab in Android native bottom nav
+    try {
+      if (window.Android && window.Android.onRouteChanged) {
+        window.Android.onRouteChanged(pathname);
+      }
+    } catch (e) {}
+  }, [pathname, search]);
   return null;
 }
 

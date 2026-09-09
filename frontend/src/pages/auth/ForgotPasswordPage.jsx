@@ -78,15 +78,6 @@ export default function ForgotPasswordPage() {
     <div className="min-h-[85vh] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-slate-50 dark:bg-slate-950 transition-colors">
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
-          <Link to="/" className="inline-flex items-center gap-2 mb-4 group">
-            {settings?.logo ? (
-              <img src={settings.logo} alt={settings.storeName || "NovaStore"} className="h-10 w-auto object-contain mx-auto" />
-            ) : (
-              <div className="w-12 h-12 rounded-2xl bg-primary flex items-center justify-center text-white shadow-lg mx-auto">
-                <Sparkles size={24} />
-              </div>
-            )}
-          </Link>
           <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
             {step === 1 ? "Forgot Password?" : "Reset Your Password"}
           </h2>

@@ -88,9 +88,14 @@ class MainActivity : AppCompatActivity() {
         webView.loadUrl(targetUrl)
     }
 
+    private var isNavigatingInternally = false
+
     // ── Bottom Navigation ─────────────────────────────────────────────
     private fun setupBottomNav() {
         binding.bottomNav.setOnItemSelectedListener { item ->
+            if (isNavigatingInternally) {
+                return@setOnItemSelectedListener true
+            }
             when (item.itemId) {
                 R.id.nav_home     -> navigateTo(URL_HOME)
                 R.id.nav_shop     -> navigateTo(URL_SHOP)
@@ -106,25 +111,28 @@ class MainActivity : AppCompatActivity() {
         val current = webView.url ?: ""
         if (current != url) {
             webView.loadUrl(url)
+        } else {
+            webView.evaluateJavascript("window.scrollTo(0,0); document.documentElement.scrollTop=0; document.body.scrollTop=0;", null)
         }
     }
 
-    private fun syncBottomNavSelection(url: String?) {
-        if (url == null) return
-        val cleanUrl = url.split("?")[0].trimEnd('/')
-        val baseClean = BASE_URL.trimEnd('/')
+    private fun syncBottomNavSelection(urlOrPath: String?) {
+        if (urlOrPath == null) return
+        val clean = urlOrPath.split("?")[0].trimEnd('/')
 
         val targetId = when {
-            cleanUrl.endsWith("/shop") || cleanUrl.contains("/product/") -> R.id.nav_shop
-            cleanUrl.endsWith("/wishlist") -> R.id.nav_wishlist
-            cleanUrl.endsWith("/cart") || cleanUrl.endsWith("/checkout") -> R.id.nav_cart
-            cleanUrl.endsWith("/profile") || cleanUrl.contains("/order") -> R.id.nav_profile
-            cleanUrl == baseClean || cleanUrl.isEmpty() -> R.id.nav_home
+            clean.endsWith("/shop") || clean.contains("/product/") || clean.contains("/category/") -> R.id.nav_shop
+            clean.endsWith("/wishlist") -> R.id.nav_wishlist
+            clean.endsWith("/cart") || clean.endsWith("/checkout") -> R.id.nav_cart
+            clean.endsWith("/profile") || clean.contains("/order") || clean.endsWith("/login") || clean.endsWith("/signup") || clean.endsWith("/forgot-password") -> R.id.nav_profile
+            clean.endsWith("/") || clean == BASE_URL.trimEnd('/') || clean.isEmpty() -> R.id.nav_home
             else -> null
         }
 
         if (targetId != null && binding.bottomNav.selectedItemId != targetId) {
-            binding.bottomNav.menu.findItem(targetId)?.isChecked = true
+            isNavigatingInternally = true
+            binding.bottomNav.selectedItemId = targetId
+            isNavigatingInternally = false
         }
     }
 
@@ -366,15 +374,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun injectBottomNavSpacing() {
-        // Prevents webpage content from being obscured by bottom nav
+        // Native bottom nav is positioned below WebView in layout, no extra web padding needed
         val js = """
             (function() {
                 var style = document.getElementById('android-nav-spacing');
-                if (!style) {
-                    style = document.createElement('style');
-                    style.id = 'android-nav-spacing';
-                    style.textContent = 'body { padding-bottom: 72px !important; }';
-                    document.head.appendChild(style);
+                if (style) {
+                    style.remove();
                 }
             })();
         """.trimIndent()
@@ -506,6 +511,13 @@ class MainActivity : AppCompatActivity() {
         @JavascriptInterface
         fun onThemeChanged(isDark: Boolean, primaryHex: String) {
             applyDynamicTheme(isDark, primaryHex)
+        }
+
+        @JavascriptInterface
+        fun onRouteChanged(path: String) {
+            runOnUiThread {
+                syncBottomNavSelection(path)
+            }
         }
 
         @JavascriptInterface

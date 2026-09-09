@@ -7,17 +7,30 @@ import {
   Grid, 
   List, 
   X, 
-  ShoppingBag,
-  ArrowUpDown,
-  Check,
-  RotateCcw,
-  Sparkles
+  ShoppingBag, 
+  ArrowUpDown, 
+  Check, 
+  RotateCcw, 
+  Sparkles,
+  ArrowDownWideNarrow,
+  ArrowUpWideNarrow,
+  TrendingUp,
+  Star,
+  ChevronDown
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import ProductCard from "../components/product/ProductCard";
 import SEO from "../components/common/SEO";
 import api from "../services/api";
 import { useTheme } from "../context/ThemeContext";
+
+const SORT_OPTIONS = [
+  { id: "newest", label: "Newest Arrivals", icon: Sparkles, color: "text-amber-500" },
+  { id: "price-low", label: "Price: Low to High", icon: ArrowDownWideNarrow, color: "text-emerald-500" },
+  { id: "price-high", label: "Price: High to Low", icon: ArrowUpWideNarrow, color: "text-indigo-500" },
+  { id: "popular", label: "Most Popular", icon: TrendingUp, color: "text-rose-500" },
+  { id: "rating", label: "Top Rated", icon: Star, color: "text-amber-400" },
+];
 
 export default function Shop() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -41,6 +54,7 @@ export default function Shop() {
 
   // Mobile Filter Drawer Toggle
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
+  const [sortModalOpen, setSortModalOpen] = useState(false);
 
   const symbol = currency?.symbol || "₹";
 
@@ -163,19 +177,57 @@ export default function Shop() {
         </div>
 
         {/* Desktop Sort Selector */}
-        <div className="hidden lg:flex items-center gap-3">
+        <div className="hidden lg:flex items-center gap-2 relative">
           <label className="text-xs font-bold text-slate-600 dark:text-slate-400">Sort By:</label>
-          <select
-            value={sort}
-            onChange={(e) => setSort(e.target.value)}
-            className="px-3.5 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-2xl text-xs font-semibold text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
-          >
-            <option value="newest">Newest Arrivals</option>
-            <option value="price-low">Price: Low to High</option>
-            <option value="price-high">Price: High to Low</option>
-            <option value="popular">Most Popular</option>
-            <option value="rating">Top Customer Rated</option>
-          </select>
+          <div className="relative">
+            <button
+              onClick={() => setSortModalOpen(!sortModalOpen)}
+              className="flex items-center gap-2 px-3.5 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-2xl text-xs font-semibold text-slate-800 dark:text-white hover:border-primary transition-all shadow-xs cursor-pointer"
+            >
+              {(() => {
+                const current = SORT_OPTIONS.find((s) => s.id === sort) || SORT_OPTIONS[0];
+                const Icon = current.icon;
+                return (
+                  <>
+                    <Icon size={14} className={current.color} />
+                    <span>{current.label}</span>
+                    <ChevronDown size={14} className="text-slate-400 ml-1" />
+                  </>
+                );
+              })()}
+            </button>
+            {sortModalOpen && (
+              <>
+                <div className="fixed inset-0 z-20" onClick={() => setSortModalOpen(false)} />
+                <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-2 z-30 space-y-1">
+                  {SORT_OPTIONS.map((opt) => {
+                    const Icon = opt.icon;
+                    const isSelected = sort === opt.id;
+                    return (
+                      <button
+                        key={opt.id}
+                        onClick={() => {
+                          setSort(opt.id);
+                          setSortModalOpen(false);
+                        }}
+                        className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer ${
+                          isSelected
+                            ? "bg-primary/10 text-primary dark:bg-primary/20"
+                            : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <Icon size={15} className={opt.color} />
+                          <span>{opt.label}</span>
+                        </div>
+                        {isSelected && <Check size={15} className="text-primary" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
@@ -223,20 +275,25 @@ export default function Shop() {
           )}
         </button>
 
-        {/* Mobile Sort Dropdown */}
-        <div className="flex-1">
-          <select
-            value={sort}
-            onChange={(e) => setSort(e.target.value)}
-            className="w-full py-2 px-3 bg-slate-100 dark:bg-slate-800 border-0 rounded-xl text-xs font-bold text-slate-900 dark:text-white focus:ring-1 focus:ring-primary focus:outline-none"
-          >
-            <option value="newest">⚡ Newest</option>
-            <option value="price-low">💰 Price: Low to High</option>
-            <option value="price-high">💎 Price: High to Low</option>
-            <option value="popular">🔥 Most Popular</option>
-            <option value="rating">⭐ Top Rated</option>
-          </select>
-        </div>
+        {/* Mobile Custom Sort Button (Theme-aware, no emojis, clean Lucide icons) */}
+        <button
+          onClick={() => setSortModalOpen(true)}
+          className="flex-1 flex items-center justify-between gap-1.5 py-2 px-3 rounded-xl font-bold text-xs bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+        >
+          {(() => {
+            const current = SORT_OPTIONS.find((s) => s.id === sort) || SORT_OPTIONS[0];
+            const Icon = current.icon;
+            return (
+              <>
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <Icon size={14} className={current.color} />
+                  <span className="truncate">{current.label}</span>
+                </div>
+                <ChevronDown size={13} className="text-slate-400 shrink-0" />
+              </>
+            );
+          })()}
+        </button>
       </div>
 
       {/* 4. Active Filter Tags Strip (If any) */}
@@ -561,6 +618,74 @@ export default function Shop() {
                 >
                   Show {pagination.total || safeProducts.length} Results
                 </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Mobile Sort Bottom Sheet (Theme-Aware: Dark in Dark Mode, Light in Light Mode) */}
+      <AnimatePresence>
+        {sortModalOpen && (
+          <div className="fixed inset-0 z-50 lg:hidden flex flex-col justify-end">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setSortModalOpen(false)}
+              className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs"
+            />
+            <motion.div
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="relative z-10 w-full bg-white dark:bg-slate-900 rounded-t-3xl border-t border-slate-200 dark:border-slate-800 p-5 shadow-2xl space-y-3 max-h-[85vh] overflow-y-auto"
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                <div className="flex items-center gap-2">
+                  <ArrowUpDown size={16} className="text-primary" />
+                  <h3 className="font-black text-sm text-slate-900 dark:text-white">Sort Products</h3>
+                </div>
+                <button
+                  onClick={() => setSortModalOpen(false)}
+                  className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              {/* Options */}
+              <div className="space-y-1.5 pt-1">
+                {SORT_OPTIONS.map((opt) => {
+                  const Icon = opt.icon;
+                  const isSelected = sort === opt.id;
+                  return (
+                    <button
+                      key={opt.id}
+                      onClick={() => {
+                        setSort(opt.id);
+                        setSortModalOpen(false);
+                      }}
+                      className={`w-full flex items-center justify-between p-3 rounded-2xl text-xs font-bold transition-colors cursor-pointer ${
+                        isSelected
+                          ? "bg-primary/10 text-primary dark:bg-primary/20 border border-primary/30"
+                          : "bg-slate-50 dark:bg-slate-800/60 text-slate-700 dark:text-slate-200 border border-transparent hover:bg-slate-100 dark:hover:bg-slate-800"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${isSelected ? "bg-primary text-white" : "bg-white dark:bg-slate-700 text-slate-500 shadow-xs"}`}>
+                          <Icon size={16} className={isSelected ? "text-white" : opt.color} />
+                        </div>
+                        <span>{opt.label}</span>
+                      </div>
+                      <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${isSelected ? "border-primary bg-primary text-white" : "border-slate-300 dark:border-slate-600"}`}>
+                        {isSelected && <Check size={12} strokeWidth={3} />}
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             </motion.div>
           </div>

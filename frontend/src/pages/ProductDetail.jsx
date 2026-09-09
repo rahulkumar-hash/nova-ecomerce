@@ -284,7 +284,7 @@ export default function ProductDetail() {
               </div>
             </div>
 
-            <h1 className="text-xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight leading-snug">
+            <h1 className="text-base sm:text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-snug">
               {product.name}
             </h1>
 
@@ -506,9 +506,9 @@ export default function ProductDetail() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             {safeSpecs.length > 0 ? (
               safeSpecs.map((s, idx) => (
-                <div key={idx} className="flex justify-between items-center p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 text-xs">
-                  <span className="font-semibold text-slate-500 dark:text-slate-400">{s.name}</span>
-                  <span className="font-bold text-slate-900 dark:text-white text-right">{s.value}</span>
+                <div key={idx} className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 text-xs">
+                  <span className="font-semibold text-slate-500 dark:text-slate-400 sm:w-2/5 text-left">{s.name}</span>
+                  <span className="font-bold text-slate-900 dark:text-white sm:w-3/5 text-left">{s.value}</span>
                 </div>
               ))
             ) : (
@@ -551,46 +551,48 @@ export default function ProductDetail() {
         </div>
       )}
 
-      {/* Mobile Floating Sticky Bottom CTA Bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-30 lg:hidden p-3 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3 shadow-2xl">
-        <div className="min-w-0">
-          <div className="flex items-baseline gap-1.5">
-            <span className="text-base font-black text-slate-900 dark:text-white font-mono">
+      {/* Mobile Floating Sticky Bottom CTA Bar (Compact Single Line) */}
+      <div className="fixed bottom-0 left-0 right-0 z-30 lg:hidden px-3 py-2 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 flex items-center justify-between gap-2 shadow-2xl">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-baseline gap-1">
+            <span className="text-sm font-black text-slate-900 dark:text-white font-mono">
               {symbol}{currentPrice?.toLocaleString()}
             </span>
             {currentMrp > currentPrice && (
-              <span className="text-[10px] text-slate-400 line-through font-mono">
+              <span className="text-[9px] text-slate-400 line-through font-mono">
                 {symbol}{currentMrp?.toLocaleString()}
               </span>
             )}
           </div>
-          <span className="text-[10px] text-emerald-600 font-bold block truncate">
+          <span className="text-[9px] text-emerald-600 font-bold block truncate leading-none mt-0.5">
             {currentStock > 0 ? "In Stock" : "Out of Stock"}
           </span>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 shrink-0">
           {currentStock > 0 ? (
             <>
               <button
                 onClick={handleAddToCart}
-                className="px-4 py-2.5 rounded-xl font-bold text-xs text-white bg-primary hover:bg-primary-hover shadow-md shadow-primary/20 flex items-center gap-1.5"
+                className="px-3 py-2 rounded-xl font-bold text-[11px] text-white bg-primary hover:bg-primary-hover shadow-md shadow-primary/20 flex items-center gap-1 shrink-0 active:scale-95 transition-all cursor-pointer"
               >
-                <ShoppingBag size={14} /> Add
+                <ShoppingBag size={13} />
+                <span>Add</span>
               </button>
               <button
                 onClick={handleBuyNow}
-                className="px-5 py-2.5 rounded-xl font-bold text-xs bg-slate-950 text-white dark:bg-white dark:text-slate-950 shadow-md flex items-center gap-1.5"
+                className="px-3.5 py-2 rounded-xl font-bold text-[11px] bg-slate-950 text-white dark:bg-white dark:text-slate-950 shadow-md flex items-center gap-1 shrink-0 active:scale-95 transition-all cursor-pointer"
               >
-                <Zap size={14} /> Buy Now
+                <Zap size={13} />
+                <span>Buy Now</span>
               </button>
             </>
           ) : (
             <button
               onClick={() => setShowNotifyModal(true)}
-              className="px-5 py-2.5 rounded-xl font-bold text-xs bg-amber-500 hover:bg-amber-600 text-white shadow-md flex items-center gap-1.5"
+              className="px-3 py-2 rounded-xl font-bold text-[11px] bg-amber-500 hover:bg-amber-600 text-white shadow-md flex items-center gap-1 shrink-0 cursor-pointer"
             >
-              <Bell size={14} /> Notify Me
+              <Bell size={13} /> Notify Me
             </button>
           )}
         </div>
