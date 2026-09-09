@@ -1,110 +1,121 @@
 package com.novastore.app
 
-import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.res.ColorStateList
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.os.Message
+import android.os.VibrationEffect
+import android.os.Vibrator
 import android.view.KeyEvent
 import android.view.View
 import android.webkit.*
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.novastore.app.databinding.ActivityMainBinding
-import com.razorpay.Checkout
-import com.razorpay.PaymentResultListener
-import org.json.JSONObject
+import java.net.URISyntaxException
 
-class MainActivity : AppCompatActivity(), PaymentResultListener {
+class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var webView: WebView
-    private lateinit var swipeRefresh: SwipeRefreshLayout
-    private lateinit var bottomNav: BottomNavigationView
-
     private var filePathCallback: ValueCallback<Array<Uri>>? = null
     private val FILE_CHOOSER_REQUEST = 1001
 
-    // Primary brand color (Nova Store theme - deep purple/indigo)
-    private val BRAND_COLOR = Color.parseColor("#4F46E5")
-    private val BRAND_DARK  = Color.parseColor("#3730A3")
+    private var backPressedTime: Long = 0
+    private var currentPrimaryColor = Color.parseColor("#6366F1")
+    private var isDarkMode = false
 
     companion object {
-        const val STORE_URL = "https://nova-ecommerce-store-r5ez.onrender.com"
+        const val BASE_URL = "https://nova-ecommerce-store-r5ez.onrender.com"
+        const val URL_HOME = "$BASE_URL/"
+        const val URL_SHOP = "$BASE_URL/shop"
+        const val URL_WISHLIST = "$BASE_URL/wishlist"
+        const val URL_CART = "$BASE_URL/cart"
+        const val URL_PROFILE = "$BASE_URL/profile"
     }
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Edge-to-edge + status bar theming
-        WindowCompat.setDecorFitsSystemWindows(window, false)
-        window.statusBarColor = BRAND_COLOR
-        window.navigationBarColor = Color.WHITE
-        val wic = WindowInsetsControllerCompat(window, window.decorView)
-        wic.isAppearanceLightStatusBars = false   // white icons on coloured bar
-        wic.isAppearanceLightNavigationBars = true // dark icons on white nav bar
-
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        webView      = binding.webView
-        swipeRefresh = binding.swipeRefresh
-        bottomNav    = binding.bottomNav
+        webView = binding.webView
 
-        setupSwipeRefresh()
+        // Edge-to-edge system bars configuration
+        WindowCompat.setDecorFitsSystemWindows(window, true)
+
         setupBottomNav()
+        setupSwipeRefresh()
         setupWebView()
-        setupRazorpay()
 
-        // Handle deep-link intent
-        val deepUrl = intent?.data?.toString()
-        webView.loadUrl(deepUrl ?: STORE_URL)
-    }
-
-    // ── Swipe-to-Refresh ──────────────────────────────────────────────
-    private fun setupSwipeRefresh() {
-        swipeRefresh.setColorSchemeColors(BRAND_COLOR, BRAND_DARK)
-        swipeRefresh.setOnRefreshListener {
-            webView.reload()
-        }
+        // Handle initial intent or deep link
+        val targetUrl = intent?.data?.toString() ?: BASE_URL
+        webView.loadUrl(targetUrl)
     }
 
     // ── Bottom Navigation ─────────────────────────────────────────────
     private fun setupBottomNav() {
-        bottomNav.setOnItemSelectedListener { item ->
+        binding.bottomNav.setOnItemSelectedListener { item ->
             when (item.itemId) {
-                R.id.nav_home     -> navigate("/")
-                R.id.nav_products -> navigate("/products")
-                R.id.nav_cart     -> navigate("/cart")
-                R.id.nav_orders   -> navigate("/orders")
-                R.id.nav_profile  -> navigate("/profile")
+                R.id.nav_home     -> navigateTo(URL_HOME)
+                R.id.nav_shop     -> navigateTo(URL_SHOP)
+                R.id.nav_wishlist -> navigateTo(URL_WISHLIST)
+                R.id.nav_cart     -> navigateTo(URL_CART)
+                R.id.nav_profile  -> navigateTo(URL_PROFILE)
             }
             true
         }
     }
 
-    private fun navigate(path: String) {
-        val currentUrl = webView.url ?: ""
-        val target = STORE_URL + path
-        if (!currentUrl.endsWith(path)) {
-            webView.loadUrl(target)
+    private fun navigateTo(url: String) {
+        val current = webView.url ?: ""
+        if (current != url) {
+            webView.loadUrl(url)
         }
     }
 
-    // ── WebView Setup ─────────────────────────────────────────────────
+    private fun syncBottomNavSelection(url: String?) {
+        if (url == null) return
+        val cleanUrl = url.split("?")[0].trimEnd('/')
+        val baseClean = BASE_URL.trimEnd('/')
+
+        val targetId = when {
+            cleanUrl.endsWith("/shop") || cleanUrl.contains("/product/") -> R.id.nav_shop
+            cleanUrl.endsWith("/wishlist") -> R.id.nav_wishlist
+            cleanUrl.endsWith("/cart") || cleanUrl.endsWith("/checkout") -> R.id.nav_cart
+            cleanUrl.endsWith("/profile") || cleanUrl.contains("/order") -> R.id.nav_profile
+            cleanUrl == baseClean || cleanUrl.isEmpty() -> R.id.nav_home
+            else -> null
+        }
+
+        if (targetId != null && binding.bottomNav.selectedItemId != targetId) {
+            binding.bottomNav.menu.findItem(targetId)?.isChecked = true
+        }
+    }
+
+    // ── Swipe-to-Refresh ──────────────────────────────────────────────
+    private fun setupSwipeRefresh() {
+        binding.swipeRefresh.setColorSchemeColors(currentPrimaryColor)
+        binding.swipeRefresh.setOnRefreshListener {
+            webView.reload()
+        }
+    }
+
+    // ── WebView Configuration ─────────────────────────────────────────
     @SuppressLint("SetJavaScriptEnabled")
     private fun setupWebView() {
         with(webView.settings) {
@@ -113,79 +124,108 @@ class MainActivity : AppCompatActivity(), PaymentResultListener {
             databaseEnabled = true
             allowFileAccess = true
             allowContentAccess = true
-            setSupportMultipleWindows(true)
-            javaScriptCanOpenWindowsAutomatically = true
-            mediaPlaybackRequiresUserGesture = false
-            mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
-            userAgentString = userAgentString + " NovaStoreApp/1.0"
-            cacheMode = WebSettings.LOAD_DEFAULT
-            loadWithOverviewMode = true
             useWideViewPort = true
+            loadWithOverviewMode = true
+            mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
+            userAgentString = "$userAgentString NovaStoreAndroidApp/1.0"
+            cacheMode = WebSettings.LOAD_DEFAULT
             setSupportZoom(false)
             builtInZoomControls = false
             displayZoomControls = false
+
+            // IMPORTANT for Razorpay: Keep popups in the same window so 3D Secure doesn't break
+            setSupportMultipleWindows(false)
+            javaScriptCanOpenWindowsAutomatically = true
         }
 
-        // Inject JS bridge for Razorpay + Share
-        webView.addJavascriptInterface(WebAppInterface(), "Android")
+        // Enable Cookies including third-party for Payment Gateways
+        CookieManager.getInstance().apply {
+            setAcceptCookie(true)
+            setAcceptThirdPartyCookies(webView, true)
+        }
+
+        // JS Bridge for Native Features and Theme Synchronization
+        webView.addJavascriptInterface(AndroidBridge(), "Android")
 
         webView.webViewClient = object : WebViewClient() {
             override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
-                swipeRefresh.isRefreshing = true
-                updateNavBarSelection(url)
-                updateStatusBarColor(url)
+                binding.swipeRefresh.isRefreshing = true
+                syncBottomNavSelection(url)
             }
 
             override fun onPageFinished(view: WebView?, url: String?) {
-                swipeRefresh.isRefreshing = false
-                // Inject CSS to hide any existing bottom nav on the website if present
-                webView.evaluateJavascript(
-                    """
-                    (function(){
-                        var style = document.createElement('style');
-                        style.textContent = 'body { padding-bottom: 60px !important; }';
-                        document.head.appendChild(style);
-                    })();
-                    """.trimIndent(), null
-                )
+                binding.swipeRefresh.isRefreshing = false
+                injectThemeObserver()
+                injectBottomNavSpacing()
             }
 
             override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
-                val url = request?.url?.toString() ?: return false
-                return when {
-                    // Stay inside app for our domain
-                    url.startsWith(STORE_URL) -> false
-                    // Open share/mailto/tel in native apps
-                    url.startsWith("mailto:") -> {
-                        startActivity(Intent(Intent.ACTION_SENDTO, Uri.parse(url)))
-                        true
-                    }
-                    url.startsWith("tel:") -> {
-                        startActivity(Intent(Intent.ACTION_DIAL, Uri.parse(url)))
-                        true
-                    }
-                    url.startsWith("whatsapp:") || url.startsWith("upi:") -> {
-                        try { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) } catch (e: Exception) {}
-                        true
-                    }
-                    // Open external links in browser
-                    else -> {
-                        startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
-                        true
-                    }
+                val uri = request?.url ?: return false
+                val url = uri.toString()
+
+                // 1. UPI Payment Links (Google Pay, PhonePe, Paytm, BHIM, Cred, etc.)
+                if (url.startsWith("upi:") || url.startsWith("tez:") ||
+                    url.startsWith("phonepe:") || url.startsWith("paytmmp:") ||
+                    url.startsWith("credpay:") || url.startsWith("bhim:")) {
+                    return launchExternalUri(uri)
                 }
+
+                // 2. Android Intent URIs (Razorpay UPI fallback intents)
+                if (url.startsWith("intent:")) {
+                    try {
+                        val intent = Intent.parseUri(url, Intent.URI_INTENT_SCHEME)
+                        if (intent != null) {
+                            if (packageManager.resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY) != null) {
+                                startActivity(intent)
+                                return true
+                            }
+                            val fallbackUrl = intent.getStringExtra("browser_fallback_url")
+                            if (fallbackUrl != null) {
+                                view?.loadUrl(fallbackUrl)
+                                return true
+                            }
+                        }
+                    } catch (e: URISyntaxException) {
+                        e.printStackTrace()
+                    }
+                    return true
+                }
+
+                // 3. Tel, Mailto, WhatsApp
+                if (url.startsWith("tel:") || url.startsWith("mailto:") || url.startsWith("whatsapp:")) {
+                    return launchExternalUri(uri)
+                }
+
+                // 4. Payment Gateway and Bank Verification Domains - ALWAYS load inside WebView!
+                if (isPaymentOrBankUrl(url)) {
+                    return false
+                }
+
+                // 5. Internal Store URLs - stay inside WebView
+                if (url.startsWith(BASE_URL) || url.contains("nova-ecommerce")) {
+                    return false
+                }
+
+                // 6. External non-store links (e.g. social media, external blogs) - open in browser
+                return launchExternalUri(uri)
             }
 
             override fun onReceivedError(view: WebView?, request: WebResourceRequest?, error: WebResourceError?) {
-                swipeRefresh.isRefreshing = false
+                binding.swipeRefresh.isRefreshing = false
                 if (request?.isForMainFrame == true) {
                     showOfflinePage()
                 }
             }
         }
 
-        // File chooser for profile image upload etc.
         webView.webChromeClient = object : WebChromeClient() {
+            override fun onProgressChanged(view: WebView?, newProgress: Int) {
+                if (newProgress >= 90) {
+                    binding.swipeRefresh.isRefreshing = false
+                }
+            }
+
+            // File chooser for image uploads (profile picture, review photos, etc.)
             override fun onShowFileChooser(
                 webView: WebView?,
                 filePathCallback: ValueCallback<Array<Uri>>?,
@@ -194,172 +234,262 @@ class MainActivity : AppCompatActivity(), PaymentResultListener {
                 this@MainActivity.filePathCallback?.onReceiveValue(null)
                 this@MainActivity.filePathCallback = filePathCallback
                 val intent = fileChooserParams?.createIntent() ?: Intent(Intent.ACTION_GET_CONTENT).apply {
-                    type = "*/*"
+                    type = "image/*"
                 }
-                startActivityForResult(Intent.createChooser(intent, "Choose File"), FILE_CHOOSER_REQUEST)
+                try {
+                    startActivityForResult(Intent.createChooser(intent, "Choose Picture"), FILE_CHOOSER_REQUEST)
+                } catch (e: Exception) {
+                    this@MainActivity.filePathCallback = null
+                    return false
+                }
                 return true
             }
+        }
+    }
 
-            // Multi-window support (e.g., payment popups)
-            override fun onCreateWindow(view: WebView?, isDialog: Boolean, isUserGesture: Boolean, resultMsg: Message?): Boolean {
-                val popup = WebView(this@MainActivity)
-                popup.settings.javaScriptEnabled = true
-                val transport = resultMsg?.obj as? WebView.WebViewTransport
-                transport?.webView = popup
-                resultMsg?.sendToTarget()
-                return true
+    private fun isPaymentOrBankUrl(url: String): Boolean {
+        val lower = url.lowercase()
+        return lower.contains("razorpay.com") ||
+               lower.contains("cashfree.com") ||
+               lower.contains("payu.in") ||
+               lower.contains("billdesk.com") ||
+               lower.contains("bank") ||
+               lower.contains("gateway") ||
+               lower.contains("checkout") ||
+               lower.contains("card") ||
+               lower.contains("otp") ||
+               lower.contains("secure") ||
+               lower.contains("payment")
+    }
+
+    private fun launchExternalUri(uri: Uri): Boolean {
+        return try {
+            val intent = Intent(Intent.ACTION_VIEW, uri)
+            startActivity(intent)
+            true
+        } catch (e: Exception) {
+            Toast.makeText(this, "No supported app found for this action.", Toast.LENGTH_SHORT).show()
+            false
+        }
+    }
+
+    // ── Dynamic Theme Synchronization ────────────────────────────────
+    private fun injectThemeObserver() {
+        val js = """
+            (function() {
+                function readAndSendTheme() {
+                    try {
+                        var isDark = document.documentElement.classList.contains('dark');
+                        var primary = window.getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim() || '#6366F1';
+                        
+                        // Detect header background color or fallback
+                        var header = document.querySelector('header') || document.querySelector('nav');
+                        var headerBg = '#FFFFFF';
+                        if (header) {
+                            var bg = window.getComputedStyle(header).backgroundColor;
+                            if (bg && bg !== 'transparent' && bg !== 'rgba(0, 0, 0, 0)') {
+                                headerBg = bg;
+                            }
+                        }
+                        if (isDark) {
+                            headerBg = '#0B0F19';
+                        }
+                        
+                        if (window.Android && window.Android.onThemeChanged) {
+                            window.Android.onThemeChanged(isDark, primary, headerBg);
+                        }
+                    } catch(e) {}
+                }
+                
+                readAndSendTheme();
+                
+                // Observe class changes on <html> for dynamic light/dark mode toggling
+                if (!window.__themeObserverAttached) {
+                    window.__themeObserverAttached = true;
+                    var observer = new MutationObserver(function() {
+                        readAndSendTheme();
+                    });
+                    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class', 'style'] });
+                }
+            })();
+        """.trimIndent()
+        webView.evaluateJavascript(js, null)
+    }
+
+    private fun injectBottomNavSpacing() {
+        // Prevents webpage content from being obscured by bottom nav
+        val js = """
+            (function() {
+                var style = document.getElementById('android-nav-spacing');
+                if (!style) {
+                    style = document.createElement('style');
+                    style.id = 'android-nav-spacing';
+                    style.textContent = 'body { padding-bottom: 72px !important; }';
+                    document.head.appendChild(style);
+                }
+            })();
+        """.trimIndent()
+        webView.evaluateJavascript(js, null)
+    }
+
+    private fun applyDynamicTheme(isDark: Boolean, primaryHex: String, headerBgStr: String) {
+        runOnUiThread {
+            try {
+                isDarkMode = isDark
+                val primaryColor = parseColorSafely(primaryHex, Color.parseColor("#6366F1"))
+                currentPrimaryColor = primaryColor
+
+                // Status Bar & Navigation Bar Colors
+                val statusBarColor = if (isDark) Color.parseColor("#0B0F19") else Color.WHITE
+                val navBarBg = if (isDark) Color.parseColor("#0F172A") else Color.WHITE
+                val navDividerColor = if (isDark) Color.parseColor("#1E293B") else Color.parseColor("#E2E8F0")
+
+                window.statusBarColor = statusBarColor
+                window.navigationBarColor = navBarBg
+
+                // Time, battery, network icon color (Light status bar = dark icons)
+                val insetsController = WindowInsetsControllerCompat(window, window.decorView)
+                insetsController.isAppearanceLightStatusBars = !isDark
+                insetsController.isAppearanceLightNavigationBars = !isDark
+
+                // Update Bottom Navigation View
+                binding.bottomNavContainer.setBackgroundColor(navBarBg)
+                binding.bottomNav.setBackgroundColor(navBarBg)
+                binding.bottomNavDivider.setBackgroundColor(navDividerColor)
+                binding.rootLayout.setBackgroundColor(if (isDark) Color.parseColor("#0B0F19") else Color.WHITE)
+
+                // Update bottom nav icon & text colors dynamically
+                val inactiveColor = if (isDark) Color.parseColor("#94A3B8") else Color.parseColor("#64748B")
+                val states = arrayOf(
+                    intArrayOf(android.R.attr.state_checked),
+                    intArrayOf(-android.R.attr.state_checked)
+                )
+                val colors = intArrayOf(primaryColor, inactiveColor)
+                val colorStateList = ColorStateList(states, colors)
+
+                binding.bottomNav.itemIconTintList = colorStateList
+                binding.bottomNav.itemTextColor = colorStateList
+                binding.swipeRefresh.setColorSchemeColors(primaryColor)
+
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
+        }
+    }
 
-            override fun onProgressChanged(view: WebView?, newProgress: Int) {
-                if (newProgress == 100) swipeRefresh.isRefreshing = false
+    private fun parseColorSafely(colorStr: String?, defaultColor: Int): Int {
+        if (colorStr.isNullOrBlank()) return defaultColor
+        return try {
+            if (colorStr.startsWith("#")) {
+                Color.parseColor(colorStr)
+            } else if (colorStr.startsWith("rgb")) {
+                // Parse rgb(r, g, b) or rgba(r, g, b, a)
+                val nums = colorStr.replace("rgb(", "").replace("rgba(", "").replace(")", "").split(",")
+                if (nums.size >= 3) {
+                    val r = nums[0].trim().toInt()
+                    val g = nums[1].trim().toInt()
+                    val b = nums[2].trim().toInt()
+                    Color.rgb(r, g, b)
+                } else defaultColor
+            } else {
+                defaultColor
             }
-        }
-
-        // CookieManager - accept third-party cookies for payment gateways
-        CookieManager.getInstance().apply {
-            setAcceptCookie(true)
-            setAcceptThirdPartyCookies(webView, true)
+        } catch (e: Exception) {
+            defaultColor
         }
     }
 
-    // ── Status bar color based on page ───────────────────────────────
-    private fun updateStatusBarColor(url: String?) {
-        val color = when {
-            url == null || url.endsWith("/")         -> BRAND_COLOR
-            url.contains("/products")                -> Color.parseColor("#7C3AED")
-            url.contains("/cart")                    -> Color.parseColor("#059669")
-            url.contains("/orders")                  -> Color.parseColor("#D97706")
-            url.contains("/profile") || url.contains("/account") -> Color.parseColor("#1D4ED8")
-            else -> BRAND_COLOR
-        }
-        window.statusBarColor = color
-    }
-
-    // ── Update bottom nav selection based on URL ──────────────────────
-    private fun updateNavBarSelection(url: String?) {
-        if (url == null) return
-        val itemId = when {
-            url.endsWith("/") || url == STORE_URL  -> R.id.nav_home
-            url.contains("/products")              -> R.id.nav_products
-            url.contains("/cart")                  -> R.id.nav_cart
-            url.contains("/orders")                -> R.id.nav_orders
-            url.contains("/profile") || url.contains("/account") -> R.id.nav_profile
-            else -> R.id.nav_home
-        }
-        bottomNav.selectedItemId = itemId
-    }
-
-    // ── Offline Page ──────────────────────────────────────────────────
     private fun showOfflinePage() {
-        webView.loadData("""
-            <html><body style="display:flex;flex-direction:column;align-items:center;
-            justify-content:center;height:100vh;font-family:sans-serif;background:#f9fafb;color:#374151;">
-            <div style="font-size:64px;">📵</div>
-            <h2>No Internet Connection</h2>
-            <p>Please check your network and try again.</p>
-            <button onclick="location.reload()" style="background:#4F46E5;color:white;
-            border:none;padding:12px 32px;border-radius:8px;font-size:16px;cursor:pointer;">
-            Retry</button></body></html>
-        """.trimIndent(), "text/html", "utf-8")
+        val offlineHtml = """
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <style>
+                    body {
+                        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                        display: flex; flex-direction: column; align-items: center; justify-content: center;
+                        height: 90vh; margin: 0; background: #0b0f19; color: #f8fafc; text-align: center; padding: 24px;
+                    }
+                    .icon { font-size: 56px; margin-bottom: 16px; }
+                    h2 { margin: 0 0 8px; font-size: 22px; font-weight: 700; }
+                    p { color: #94a3b8; font-size: 14px; margin-bottom: 24px; line-height: 1.5; }
+                    button {
+                        background: #6366f1; color: white; border: none; padding: 12px 32px;
+                        border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer;
+                        box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="icon">📶</div>
+                <h2>No Internet Connection</h2>
+                <p>Please check your mobile data or Wi-Fi network and try again.</p>
+                <button onclick="location.reload()">Retry Connection</button>
+            </body>
+            </html>
+        """.trimIndent()
+        webView.loadDataWithBaseURL(null, offlineHtml, "text/html", "UTF-8", null)
     }
 
-    // ── Razorpay ──────────────────────────────────────────────────────
-    private fun setupRazorpay() {
-        Checkout.preload(applicationContext)
-    }
+    // ── JavaScript Interface Bridge ───────────────────────────────────
+    inner class AndroidBridge {
 
-    fun startRazorpayPayment(amount: Int, orderId: String, name: String, email: String, phone: String) {
-        val checkout = Checkout()
-        checkout.setKeyID("YOUR_RAZORPAY_KEY_ID") // Replace with actual key
-        val options = JSONObject().apply {
-            put("name", "Nova Store")
-            put("description", "Order #$orderId")
-            put("amount", amount * 100) // paise
-            put("currency", "INR")
-            put("order_id", orderId)
-            put("prefill", JSONObject().apply {
-                put("name", name)
-                put("email", email)
-                put("contact", phone)
-            })
-            put("theme", JSONObject().apply {
-                put("color", "#4F46E5")
-            })
-        }
-        checkout.open(this, options)
-    }
-
-    override fun onPaymentSuccess(razorpayPaymentId: String?) {
-        // Send result back to WebView JS
-        webView.evaluateJavascript(
-            "window.onRazorpaySuccess && window.onRazorpaySuccess('$razorpayPaymentId')", null
-        )
-        Toast.makeText(this, "✅ Payment Successful!", Toast.LENGTH_LONG).show()
-    }
-
-    override fun onPaymentError(code: Int, response: String?) {
-        webView.evaluateJavascript(
-            "window.onRazorpayError && window.onRazorpayError($code, '$response')", null
-        )
-        Toast.makeText(this, "❌ Payment Failed: $response", Toast.LENGTH_LONG).show()
-    }
-
-    // ── JS Bridge ─────────────────────────────────────────────────────
-    inner class WebAppInterface {
         @JavascriptInterface
-        fun shareText(title: String, text: String, url: String) {
+        fun onThemeChanged(isDark: Boolean, primaryHex: String, headerBg: String) {
+            applyDynamicTheme(isDark, primaryHex, headerBg)
+        }
+
+        @JavascriptInterface
+        fun share(title: String, text: String, url: String) {
             val intent = Intent(Intent.ACTION_SEND).apply {
                 type = "text/plain"
                 putExtra(Intent.EXTRA_SUBJECT, title)
-                putExtra(Intent.EXTRA_TEXT, "$text\n$url")
+                putExtra(Intent.EXTRA_TEXT, "$text\n$url".trim())
             }
             startActivity(Intent.createChooser(intent, "Share via"))
         }
 
         @JavascriptInterface
-        fun startPayment(amount: Int, orderId: String, name: String, email: String, phone: String) {
+        fun copyToClipboard(text: String) {
+            val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+            clipboard.setPrimaryClip(ClipData.newPlainText("NovaStore", text))
             runOnUiThread {
-                startRazorpayPayment(amount, orderId, name, email, phone)
+                Toast.makeText(this@MainActivity, "Copied to clipboard", Toast.LENGTH_SHORT).show()
             }
         }
 
         @JavascriptInterface
-        fun openDialer(phone: String) {
-            startActivity(Intent(Intent.ACTION_DIAL, Uri.parse("tel:$phone")))
-        }
-
-        @JavascriptInterface
-        fun openWhatsApp(phone: String, message: String) {
-            val url = "https://wa.me/$phone?text=${Uri.encode(message)}"
-            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
-        }
-
-        @JavascriptInterface
-        fun copyToClipboard(text: String) {
-            val clipboard = getSystemService(CLIPBOARD_SERVICE) as android.content.ClipboardManager
-            clipboard.setPrimaryClip(android.content.ClipData.newPlainText("Copied", text))
-            runOnUiThread { Toast.makeText(this@MainActivity, "Copied!", Toast.LENGTH_SHORT).show() }
-        }
-
-        @JavascriptInterface
-        fun vibrate() {
-            val vibrator = getSystemService(VIBRATOR_SERVICE) as android.os.Vibrator
+        fun vibrate(milliseconds: Long) {
+            val vibrator = getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                vibrator.vibrate(android.os.VibrationEffect.createOneShot(50, android.os.VibrationEffect.DEFAULT_AMPLITUDE))
+                vibrator?.vibrate(VibrationEffect.createOneShot(milliseconds.coerceAtLeast(40), VibrationEffect.DEFAULT_AMPLITUDE))
+            } else {
+                @Suppress("DEPRECATION")
+                vibrator?.vibrate(milliseconds.coerceAtLeast(40))
             }
         }
     }
 
-    // ── Back button ───────────────────────────────────────────────────
+    // ── Navigation & Back Key ─────────────────────────────────────────
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
-        if (keyCode == KeyEvent.KEYCODE_BACK && webView.canGoBack()) {
-            webView.goBack()
-            return true
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
+            if (webView.canGoBack()) {
+                webView.goBack()
+                return true
+            } else {
+                if (System.currentTimeMillis() - backPressedTime < 2000) {
+                    finish()
+                } else {
+                    backPressedTime = System.currentTimeMillis()
+                    Toast.makeText(this, "Press back again to exit", Toast.LENGTH_SHORT).show()
+                }
+                return true
+            }
         }
         return super.onKeyDown(keyCode, event)
     }
 
-    // ── File chooser result ───────────────────────────────────────────
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == FILE_CHOOSER_REQUEST) {
@@ -375,7 +505,6 @@ class MainActivity : AppCompatActivity(), PaymentResultListener {
     override fun onResume() {
         super.onResume()
         webView.onResume()
-        CookieManager.getInstance().flush()
     }
 
     override fun onPause() {

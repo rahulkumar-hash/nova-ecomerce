@@ -12,9 +12,14 @@
         <item name="android:windowLightStatusBar">false</item>
     </style>
 
-    <!-- Splash theme -->
-    <style name="Theme.NovaStore.Splash" parent="Theme.NovaStore">
-        <item name="android:windowBackground">@color/brand_primary</item>
+    <style name="BottomNavTextActive" parent="TextAppearance.MaterialComponents.Caption">
+        <item name="android:textSize">11sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="BottomNavTextInactive" parent="TextAppearance.MaterialComponents.Caption">
+        <item name="android:textSize">11sp</item>
+        <item name="android:textStyle">normal</item>
     </style>
 
 </resources>

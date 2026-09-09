@@ -5,25 +5,28 @@ plugins {
 
 android {
     namespace = "com.novastore.app"
-    compileSdk = 35
+    compileSdk = 34
 
     defaultConfig {
         applicationId = "com.novastore.app"
         minSdk = 24
-        targetSdk = 35
+        targetSdk = 34
         versionCode = 1
-        versionName = "1.0"
-        // Razorpay requires this
-        manifestPlaceholders["razorpay_key_id"] = "YOUR_RAZORPAY_KEY_ID"
+        versionName = "1.0.0"
+        manifestPlaceholders["razorpay_key_id"] = "rzp_test_1DP5mmOlF5G5ag"
     }
 
     buildTypes {
         release {
-            isMinifyEnabled = true
+            isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+        }
+        debug {
+            applicationIdSuffix = ""
+            isDebuggable = true
         }
     }
 
@@ -32,11 +35,11 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = "17"
     }
 }
 
